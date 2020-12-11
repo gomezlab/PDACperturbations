@@ -60,6 +60,33 @@ toc()
 # 	fit(Growth ~ ., data = klaeger_data)
 
 ```
+```{r}
+
+klaeger_folds <- vfold_cv(klaeger_data, v = 10)
+
+tune_spec <- 
+  rand_forest(
+    trees = tune()
+  ) %>% 
+  set_engine("ranger") %>% 
+  set_mode("regression")
+
+tree_grid <- grid_regular(trees(range = c(2000,5000)),
+                          levels = 5)
+
+tree_wf <- workflow() %>%
+  add_model(tune_spec) %>%
+  add_formula(Growth ~ .)
+
+tic()
+tree_res <- 
+  tree_wf %>% 
+  tune_grid(
+    resamples = klaeger_folds,
+    grid = tree_grid
+    )
+toc()
+```
 
 ```{r}
 prediction_results = c()
@@ -93,13 +120,19 @@ toc()
 ```
 
 ```{r}
+rmse = signif(mean(sqrt((klaeger_LOO_results$true_growth - klaeger_LOO_results$predicted_growth_RF)^2)), 3)
+r_sq = signif(glance(lm(true_growth ~ predicted_growth_RF, data = klaeger_LOO_results))$r.squared, 3)
+
+results_text = paste0("RMSE: ",rmse,"\n","R\u00B2: ",r_sq)
 
 ggplot(klaeger_LOO_results, aes(x=true_growth, y=predicted_growth_RF)) + 
-	geom_point() +
-	geom_smooth(method='lm') +
+	geom_point(size=1) +
+	geom_smooth(aes(alpha=0.75), method='lm', se=F, lwd=1.5, alpha=0.5) +
 	ylim(c(-1,1)) + xlim(c(-1,1)) +
 	labs(x="True Growth Rate",y="Random Forest Prediction") +
+	geom_text(aes(x=1,y=-1,label=results_text),hjust=1,vjust=0,size=6) +
 	BerginskiRMisc::theme_berginski()
+ggsave(here('figures/klaeger_random_forest.png'),height=5,width=5)
 
 ```
 

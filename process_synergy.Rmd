@@ -13,7 +13,7 @@ library(broom)
 ```
 
 ```{r}
-synergy_files = list.files(here('data'), full.names = T)
+synergy_files = list.files(here('data','SynergyData'), full.names = T)
 
 synergy_data = data.frame()
 
@@ -47,13 +47,15 @@ for (this_file in synergy_files) {
 											 	mutate(cell_line = cell_line))
 }
 
-# temp = synergy_data %>% 
-# 	clean_names() %>%
-# 	filter(anchor == "Dinaciclib", compound == "KH-CB19")
 
 synergy_data = synergy_data %>% 
 	clean_names() %>%
-	select(-ind,-plate,-row,-col)
+	#there were downstream problems with the NAF line used in the screen, removing
+	#from data set
+	#Maybe it isn't a problem? Conversation with Shawn 2-10-2021
+	# filter(cell_line != "NAF") %>%
+	select(-ind,-plate,-row,-col) %>%
+	write_rds(here('data/synergy_combined.rds'))
 ```
 
 ```{r}

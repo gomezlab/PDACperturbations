@@ -1,0 +1,307 @@
+---
+title: "Build Klaeger PDAC Synergy Model"
+author: "Matthew Berginski"
+date: "12/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidymodels)
+library(tidyverse)
+library(yardstick)
+library(tictoc)
+library(here)
+```
+
+```{r}
+klaeger_data = read_rds(here('data/klaeger_full_tidy.rds'))
+
+klaeger_data_wide = klaeger_data %>%
+	pivot_wider(names_from = gene_name, values_from = relative_intensity)
+
+```
+
+```{r combine synergy and klaeger}
+synergy_data_only_single = read_rds(here('data/synergy_combined.rds')) %>%
+	mutate(anchor_lower = tolower(anchor),
+				 compound_lower = tolower(compound)) %>%
+	filter(dose_anchor_m == 0 | dose_compound_m == 0) %>%
+	group_by(cell_line,compound_lower,dose_compound_m) %>% 
+	summarise(viability = mean(viability))
+
+
+compound_matches = read_csv(here('data/DrugMatches.csv')) %>%
+	#removing one of the alisertib compound matches that aren't in my copy of the synergy
+	filter(pdac != "mln8237") %>%
+	filter(pdac != "imatinib mesylate (sti571)")
+
+klaeger_data_matches = klaeger_data_wide %>%
+	#All of the Klaeger data with zero compound concentration are 1 across the
+	#board, also I have no particular way to match up the the no-treatments with
+	#all the no-treatments from the synergy screen.
+	filter(concentration_M != 0) %>%
+	mutate(drug_lower = tolower(drug)) %>%
+	filter(drug_lower %in% compound_matches$klaeger) %>%
+	left_join(compound_matches, by=c('drug_lower'='klaeger')) %>%
+	select(drug,drug_lower,pdac,everything())
+
+klaeger_data_matches_compound = klaeger_data_matches %>% 
+	left_join(synergy_data_only_single %>%
+							select(compound_lower,dose_compound_m,viability,cell_line), 
+						by=c('pdac' = 'compound_lower', 'concentration_M' = 'dose_compound_m')) %>%
+	select(drug,drug_lower,pdac,cell_line,viability,everything()) %>%
+	filter(!is.na(viability))
+
+
+klaeger_data_matches_full = bind_rows(
+	klaeger_data_matches_compound
+) %>% select(drug,drug_lower,pdac,cell_line,viability,everything())
+```
+
+```{r data organization by viability}
+drug_viability_rank = klaeger_data_matches_full %>%
+	group_by(drug) %>%
+	summarise(mean_viability = mean(viability)) %>%
+	arrange(desc(mean_viability))
+
+cell_line_viability_rank = klaeger_data_matches_full %>%
+	group_by(cell_line) %>%
+	summarise(mean_viability = mean(viability)) %>%
+	arrange(desc(mean_viability))
+
+klaeger_data_matches_full = klaeger_data_matches_full %>%
+	mutate(drug = fct_relevel(as.factor(drug), drug_viability_rank$drug),
+				 cell_line = fct_relevel(as.factor(cell_line), cell_line_viability_rank$cell_line))
+
+```
+
+# Cell Viability Visualizations
+
+```{r distribution of drug matched viability}
+ggplot(klaeger_data_matches_full, aes(x = viability)) + 
+	geom_histogram() +
+	labs(x="Cell Viability", y="Number of Drug/Cell Line Combos") +
+	BerginskiRMisc::theme_berginski()
+```
+
+```{r}
+library(ggridges)
+ggplot(klaeger_data_matches_full, aes(x=viability,y=cell_line)) +
+	geom_density_ridges() +
+	labs(x="Cell Viability",y='') +
+	BerginskiRMisc::theme_berginski()
+```
+
+```{r, fig.height=6}
+library(ggridges)
+ggplot(klaeger_data_matches_full, aes(x=viability,y=drug)) +
+	geom_density_ridges() +
+	labs(x="Cell Viability",y='') +
+	BerginskiRMisc::theme_berginski()
+```
+
+```{r}
+treatment_variability = klaeger_data_matches_full %>% 
+	group_by(cell_line,drug,concentration_M) %>% 
+	summarise(viability_sd = sd(viability),
+						viability_mean = mean(viability)) %>% 
+	arrange(desc(viability_sd))
+
+ggplot(treatment_variability, aes(x=viability_sd,y=cell_line)) +
+	geom_density_ridges() +
+	labs(x="Variation in Cell Viability By Treatment",y='') +
+	BerginskiRMisc::theme_berginski()
+```
+
+# Random Forest - 10 fold random CV
+
+```{r}
+tic()
+
+metrics = data.frame()
+
+for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
+	
+	klaeger_matches_model_set = klaeger_data_matches_full %>%
+		filter(cell_line == this_cell_line) %>%
+		select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+	
+	folds <- vfold_cv(klaeger_matches_model_set, v = 10)
+	
+	for (num_trees in seq(1000,5000,by=1000)) {
+		
+		rf_mod <-
+			rand_forest(trees = num_trees) %>%
+			set_engine("ranger", num.threads = 10) %>%
+			set_mode("regression")
+		
+		rf_wf <-
+			workflow() %>%
+			add_model(rf_mod) %>%
+			add_formula(viability ~ .)
+		
+		rf_fit_rs <-
+			rf_wf %>%
+			fit_resamples(folds, save_pred = T)
+		
+		metrics = rbind(
+			metrics,
+			collect_metrics(rf_fit_rs) %>% mutate(num_trees = num_trees, cell_line = this_cell_line)
+		)
+		
+	}
+}
+toc()
+
+# rf_fit = rf_mod %>%
+# 	fit(Growth ~ ., data = klaeger_data)
+
+```
+
+# Random Forest - Leave One Compound Out
+
+```{r}
+tic()
+
+prediction_results = c()
+for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
+	
+	klaeger_data_cell_line = klaeger_data_matches_full %>%
+		filter(cell_line == this_cell_line)
+	
+	for (exclude_compound in unique(klaeger_data_cell_line$drug)) {
+		
+		klaeger_train = klaeger_data_cell_line %>%
+			filter(drug != exclude_compound) %>%
+			select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+		
+		klaeger_test = klaeger_data_cell_line %>%
+			filter(drug == exclude_compound) %>%
+			select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
+		
+		these_prediction_results = klaeger_data_cell_line %>%
+			filter(drug == exclude_compound) %>%
+			select(drug,drug_lower,pdac,concentration_M,cell_line)
+		
+		
+		rf_mod <- 
+			rand_forest(trees = 1000) %>% 
+			set_engine("ranger", num.threads = 12) %>% 
+			set_mode("regression")
+		
+		rf_fit_rs <-
+			rf_mod %>%
+			fit(viability ~ ., data = klaeger_train)
+		
+		these_prediction_results$predicted_viability = predict(rf_fit_rs,klaeger_test)$.pred
+		these_prediction_results$actual_viability = klaeger_test$viability
+		
+		prediction_results = bind_rows(
+			prediction_results,
+			these_prediction_results
+		)
+	}
+}
+toc()
+
+# prediction_results = prediction_results %>% 
+# 	left_join(klaeger_data_matches_full %>% 
+# 							select(drug,drug_lower,pdac,concentration_M,cell_line,viability))
+
+# rf_fit = rf_mod %>%
+# 	fit(Growth ~ ., data = klaeger_data)
+
+```
+
+```{r}
+ggplot(prediction_results, aes(x=actual_viability,y=predicted_viability)) +
+	geom_hex() +
+	# geom_point(alpha=0.05) +
+	geom_smooth() +
+	xlim(c(0,110)) + 
+	ylim(c(0,110)) +
+	geom_segment(aes(x=0,y=0,xend=100,yend=100)) +
+	BerginskiRMisc::theme_berginski()
+```
+
+```{r}
+ggplot(prediction_results, aes(x=actual_viability,y=predicted_viability)) +
+	geom_hex() +
+	# geom_point() +
+	geom_smooth() +
+	xlim(c(0,110)) + 
+	ylim(c(0,110)) +
+	geom_segment(aes(x=0,y=0,xend=100,yend=100)) +
+	BerginskiRMisc::theme_berginski() +
+	facet_wrap(~cell_line)
+```
+
+# Random Forest - Leave One Out
+
+```{r}
+tic()
+# if (file.exists(here('src/klaeger_synergy_model/predictions_LOO.rds'))) {
+# 	prediction_results_LOO = read_rds(here('src/klaeger_synergy_model/predictions_LOO.rds'))
+# } else {
+prediction_results_LOO = c()
+for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
+	
+	klaeger_data_cell_line = klaeger_data_matches_full %>%
+		filter(cell_line == this_cell_line)
+	
+	for (exclude_row in 1:dim(klaeger_data_cell_line)) {
+		
+		klaeger_train = klaeger_data_cell_line[-exclude_row,] %>%
+			select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+		
+		klaeger_test = klaeger_data_cell_line[exclude_row,] %>%
+			select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
+		
+		these_prediction_results = klaeger_data_cell_line[exclude_row,] %>%
+			select(drug,drug_lower,pdac,concentration_M,cell_line)
+		
+		rf_mod <- 
+			rand_forest(trees = 1000) %>% 
+			set_engine("ranger", num.threads = 10) %>% 
+			set_mode("regression")
+		
+		rf_fit_rs <-
+			rf_mod %>%
+			fit(viability ~ ., data = klaeger_train)
+		
+		these_prediction_results$predicted_viability = predict(rf_fit_rs,klaeger_test)$.pred
+		these_prediction_results$actual_viability = klaeger_test$viability
+		
+		prediction_results_LOO = bind_rows(
+			prediction_results_LOO,
+			these_prediction_results
+		)
+	}
+}
+# 	write_rds(prediction_results_LOO,here('src/klaeger_synergy_model/predictions_LOO.rds'))
+# }
+toc()
+```
+
+```{r}
+ggplot(prediction_results_LOO, aes(x=actual_viability,y=predicted_viability)) +
+	geom_hex() +
+	# geom_point(alpha=0.05) +
+	geom_smooth() +
+	xlim(c(0,110)) + 
+	ylim(c(0,110)) +
+	geom_segment(aes(x=0,y=0,xend=100,yend=100)) +
+	BerginskiRMisc::theme_berginski()
+```
+
+```{r}
+ggplot(prediction_results_LOO, aes(x=actual_viability,y=predicted_viability)) +
+	geom_hex() +
+	# geom_point() +
+	geom_smooth() +
+	xlim(c(0,110)) + 
+	ylim(c(0,110)) +
+	geom_segment(aes(x=0,y=0,xend=100,yend=100)) +
+	BerginskiRMisc::theme_berginski() +
+	facet_wrap(~cell_line)
+```

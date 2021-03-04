@@ -12,8 +12,6 @@ library(tictoc)
 library(here)
 ```
 
-# Read In and Combine Klaeger/Synergy Data
-
 ```{r}
 klaeger_data = read_rds(here('data/klaeger_full_tidy.rds'))
 
@@ -62,18 +60,6 @@ klaeger_data_matches_full = bind_rows(
 	klaeger_data_matches_compound,
 	klaeger_data_matches_anchor
 ) %>% select(drug,drug_lower,pdac,cell_line,viability,everything())
-
-klaeger_data_matches_tidy = klaeger_data %>% 
-	filter(drug %in% unique(klaeger_data_matches_full$drug), 
-				 concentration_M %in% unique(klaeger_data_matches_full$concentration_M))
-
-no_gene_variation = klaeger_data_matches_tidy %>%
-	group_by(gene_name) %>%
-	summarise(gene_sd = sd(relative_intensity)) %>%
-	filter(gene_sd == 0)
-
-klaeger_data_matches_full = klaeger_data_matches_full %>%
-	select(-one_of(no_gene_variation$gene_name))
 ```
 
 ```{r data organization by viability}
@@ -93,9 +79,7 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
 
 ```
 
-# Exploritory Data Analysis
-
-## Cell Viability Visualizations
+# Cell Viability Visualizations
 
 ```{r distribution of drug matched viability}
 ggplot(klaeger_data_matches_full, aes(x = viability)) + 
@@ -133,43 +117,9 @@ ggplot(treatment_variability, aes(x=viability_sd,y=cell_line)) +
 	BerginskiRMisc::theme_berginski()
 ```
 
-## Kinase Inhibition Variation
-
-There are `r dim(no_gene_variation)[1]` kinases that aren't responsive to any of the compounds. That leaves `length(unique(klaeger_data_matches_tidy$gene_name)) - dim(no_gene_variation)[1]` responsive kinases. The number of compounds they respond to is:
+# 10 fold random CV
 
 ```{r}
-drug_hit_per_gene = klaeger_data_matches_tidy %>%
-	filter(! gene_name %in% no_gene_variation$gene_name) %>%
-	group_by(gene_name, drug) %>%
-	summarise(gene_varies = any(relative_intensity != 1)) %>%
-	group_by(gene_name) %>%
-	summarise(number_drug_hits = sum(gene_varies))
-
-
-ggplot(drug_hit_per_gene, aes(x=number_drug_hits)) + 
-	geom_histogram(bins=30) + 
-	labs(x="Number of Drug Hits Per Gene",y='')
-```
-```{r}
-drug_hit_per_gene = klaeger_data_matches_tidy %>%
-	filter(! gene_name %in% no_gene_variation$gene_name) %>%
-	group_by(gene_name, drug) %>%
-	summarise(gene_varies = any(relative_intensity != 1)) %>%
-	group_by(drug) %>%
-	summarise(number_gene_hits = sum(gene_varies))
-
-
-ggplot(drug_hit_per_gene, aes(x=number_gene_hits)) + 
-	geom_histogram(bins=30) + 
-	labs(x="Number of Gene Hits Per Drug",y='')
-```
-
-
-#Modeling
-
-## Random Forest - 10 fold random CV
-
-```{r, cache=T, eval=F}
 tic()
 
 metrics = data.frame()
@@ -182,29 +132,30 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 	
 	folds <- vfold_cv(klaeger_matches_model_set, v = 10)
 	
-	for (num_trees in seq(1000,5000,by=1000)) {
-		
-		rf_mod <-
-			rand_forest(trees = num_trees) %>%
-			set_engine("ranger", num.threads = 10) %>%
-			set_mode("regression")
-		
-		rf_wf <-
-			workflow() %>%
-			add_model(rf_mod) %>%
-			add_formula(viability ~ .)
-		
-		rf_fit_rs <-
-			rf_wf %>%
-			fit_resamples(folds, save_pred = T)
-		
-		metrics = rbind(
-			metrics,
-			collect_metrics(rf_fit_rs) %>% mutate(num_trees = num_trees, cell_line = this_cell_line)
-		)
-		
-	}
+	nnet_mod <-
+		mlp(epochs = 100, hidden_units = 5, dropout = 0.1) %>%
+		set_mode("regression") %>% 
+		# Also set engine-specific `verbose` argument to prevent logging the results: 
+		set_engine("keras", verbose = 0)
+	
+	nn_wf <-
+		workflow() %>%
+		add_model(nnet_mod) %>%
+		add_formula(viability ~ .)
+	
+	nn_fit_rs <-
+		nn_wf %>%
+		fit_resamples(folds)
+	
+	metrics = rbind(
+		metrics,
+		collect_metrics(nn_fit_rs) %>% mutate(cell_line = this_cell_line)
+	)
+	
+	
 }
+
+
 toc()
 
 # rf_fit = rf_mod %>%
@@ -212,9 +163,9 @@ toc()
 
 ```
 
-## Random Forest - Leave One Compound Out
+# Leave One Compound Out
 
-```{r, cache=T}
+```{r}
 tic()
 
 prediction_results = c()
@@ -237,17 +188,17 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 			filter(drug == exclude_compound) %>%
 			select(drug,drug_lower,pdac,concentration_M,cell_line)
 		
+		nnet_mod <-
+			mlp(epochs = 100, hidden_units = 5, dropout = 0.1) %>%
+			set_mode("regression") %>% 
+			# Also set engine-specific `verbose` argument to prevent logging the results: 
+			set_engine("keras", verbose = 0)
 		
-		rf_mod <- 
-			rand_forest(trees = 1000) %>% 
-			set_engine("ranger", num.threads = 12) %>% 
-			set_mode("regression")
-		
-		rf_fit_rs <-
-			rf_mod %>%
+		nn_fit_rs <-
+			nnet_mod %>%
 			fit(viability ~ ., data = klaeger_train)
 		
-		these_prediction_results$predicted_viability = predict(rf_fit_rs,klaeger_test)$.pred
+		these_prediction_results$predicted_viability = predict(nn_fit_rs,klaeger_test)$.pred
 		these_prediction_results$actual_viability = klaeger_test$viability
 		these_prediction_results$test_set_size = dim(klaeger_test)[1]
 		
@@ -291,56 +242,51 @@ ggplot(prediction_results, aes(x=actual_viability,y=predicted_viability)) +
 	facet_wrap(~cell_line)
 ```
 
-## Random Forest - Leave One Compound/Concentration Out
+# Random Forest - Leave One Compound/Concentration Out
 
-```{r, cache=T}
+```{r}
 tic()
 
-if (file.exists(here('src/klaeger_synergy_model/predictions_LOO.rds'))) {
-	prediction_results_LO_concen = read_rds(here('src/klaeger_synergy_model/predictions_LO_concen.rds'))
-} else {
-	prediction_results_LO_concen = c()
-	for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
-		
-		klaeger_data_cell_line = klaeger_data_matches_full %>%
-			filter(cell_line == this_cell_line)
-		
-		for (exclude_compound in unique(klaeger_data_cell_line$drug)) {
-			for (exclude_concentration in unique(klaeger_data_cell_line$concentration_M)) {
-				
-				klaeger_train = klaeger_data_cell_line %>%
-					filter(drug != exclude_compound, concentration_M != exclude_concentration) %>%
-					select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
-				
-				klaeger_test = klaeger_data_cell_line %>%
-					filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-					select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
-				
-				these_prediction_results = klaeger_data_cell_line %>%
-					filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-					select(drug,drug_lower,pdac,concentration_M,cell_line)
-				
-				
-				rf_mod <- 
-					rand_forest(trees = 1000) %>% 
-					set_engine("ranger", num.threads = 12) %>% 
-					set_mode("regression")
-				
-				rf_fit_rs <-
-					rf_mod %>%
-					fit(viability ~ ., data = klaeger_train)
-				
-				these_prediction_results$predicted_viability = predict(rf_fit_rs,klaeger_test)$.pred
-				these_prediction_results$actual_viability = klaeger_test$viability
-				these_prediction_results$test_set_size = dim(klaeger_test)[1]
-				
-				prediction_results_LO_concen = bind_rows(
-					prediction_results_LO_concen,
-					these_prediction_results
-				)
-			}
+prediction_results_LO_concen = c()
+for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
+	
+	klaeger_data_cell_line = klaeger_data_matches_full %>%
+		filter(cell_line == this_cell_line)
+	
+	for (exclude_compound in unique(klaeger_data_cell_line$drug)) {
+		for (exclude_concentration in unique(klaeger_data_cell_line$concentration_M)) {
+			
+			klaeger_train = klaeger_data_cell_line %>%
+				filter(drug != exclude_compound, concentration_M != exclude_concentration) %>%
+				select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+			
+			klaeger_test = klaeger_data_cell_line %>%
+				filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
+				select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
+			
+			these_prediction_results = klaeger_data_cell_line %>%
+				filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
+				select(drug,drug_lower,pdac,concentration_M,cell_line)
+			
+			
+			rf_mod <- 
+				rand_forest(trees = 1000) %>% 
+				set_engine("ranger", num.threads = 12) %>% 
+				set_mode("regression")
+			
+			rf_fit_rs <-
+				rf_mod %>%
+				fit(viability ~ ., data = klaeger_train)
+			
+			these_prediction_results$predicted_viability = predict(rf_fit_rs,klaeger_test)$.pred
+			these_prediction_results$actual_viability = klaeger_test$viability
+			these_prediction_results$test_set_size = dim(klaeger_test)[1]
+			
+			prediction_results_LO_concen = bind_rows(
+				prediction_results_LO_concen,
+				these_prediction_results
+			)
 		}
-		write_rds(prediction_results_LO_concen,here('src/klaeger_synergy_model/predictions_LO_concen.rds'))
 	}
 }
 toc()
@@ -369,7 +315,7 @@ ggplot(prediction_results_LO_concen, aes(x=actual_viability,y=predicted_viabilit
 	facet_wrap(~cell_line)
 ```
 
-## Random Forest - Leave One Out
+# Random Forest - Leave One Out
 
 ```{r}
 tic()

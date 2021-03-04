@@ -11,7 +11,7 @@ library(janitor)
 library(here)
 ```
 
-I downloaded a copy of supplemental table 2 from the Klaeger et al. paper from 2017 (DOI: 10.1126/science.aan4368). This data file contains the combinations of compound and kinase that the study determined counted as a hit. I think this partially because the number of kinases listed for each compound varies widely, also the page 4 of the supplement implies it.  Also, this is how I would design the supplement to make it easier for a biologist/chemist interested a given compound to go see what else is marked a hit.
+I downloaded a copy of supplemental table 2 from the Klaeger et al. paper from 2017 (DOI: 10.1126/science.aan4368). This data file contains the combinations of compound and kinase that the study counted as a hit. I think this partially because the number of kinases listed for each compound varies widely, also the page 4 of the supplement implies it.  Also, this is how I would design the supplement to make it easier for a biologist/chemist interested a given compound to go see what else is marked a hit.
 
 What do we do about the all the compounds missing from the data table then? Since they aren't a hit by the fitting method Klaeger describes, that means that the relative abundance of the kinase isn't affected by the compound. Thus, we should set all these "missing" values to 1 which indicates that the relative ratio with DMSO stays the same throughout.
 
@@ -19,7 +19,7 @@ I have tried to double check that non-hits are excluded with compound Y−39983.
 
 This method of checking sucks though and what I really want is every relative call for every kinase in all the conditions, but mass spec analysis is a nightmare. Save me future grad student.
 
-```{r}
+```{r, error=F, warning=F}
 klaeger_raw = read_excel(here('data/KlaegerScience2017/Klaeger_Science_2017 Supplementary Table 2 Target Lists.xlsx'), sheet=3) %>% 
 	clean_names() %>% 
 	select(drug,gene_name,contains('relative')) %>%
@@ -57,7 +57,7 @@ klaeger_full = bind_rows(klaeger_raw, missing_combos)
 # all(row_counts$n == 1)
 ```
 
-There are a few (<200) NA entries in the data file, which appear to be complete drug concentrations that are missing from the data file. Missing data makes the downstream modeling angry, so I'll find all those missing values and simply interpolate the missing values as the average of the two closest concentrations.
+There are a few NA entries (`r sum(is.na(klaeger_full$relative_intensity))`) in the data file, which appear to be complete drug concentrations that are missing from the data file. Missing data makes the downstream modeling angry, so I'll find all those missing values and simply interpolate the missing values as the average of the two closest concentrations.
 
 ```{r}
 NA_entries = klaeger_full %>% filter(is.na(relative_intensity))
@@ -90,3 +90,29 @@ klaeger_full = klaeger_full %>%
 	write_rds(here('data/klaeger_full_tidy.rds'))
 ```
 
+# Exploritory Data Analysis
+
+```{r}
+included_drug_gene_combos = klaeger_raw %>% 
+	select(drug, gene_name) %>% 
+	unique()
+
+missing_drug_genes_combos = crossing(drug = unique(klaeger_raw$drug),
+													gene_name = unique(klaeger_raw$gene_name)) %>%
+	setdiff(included_drug_gene_combos)
+
+percent_present  = signif(100*dim(included_drug_gene_combos)[1]/(dim(included_drug_gene_combos)[1] + dim(missing_drug_genes_combos)[1]),3)
+```
+
+Considering all the possible drug/gene target combinations in the Klaeger data, only `r percent_present`% are present in the data set. The distribution of the number of listed gene hits per compound is:
+
+```{r}
+klaeger_counts = klaeger_raw %>% 
+	group_by(drug) %>% 
+	summarise(num_kinases = length(unique(gene_name)))
+
+ggplot(klaeger_counts, aes(x=num_kinases)) + 
+	geom_histogram() +
+	labs(x="Number of Kinases Per Drug",y='') +
+	BerginskiRMisc::theme_berginski()
+```

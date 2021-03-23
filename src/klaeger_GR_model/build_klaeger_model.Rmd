@@ -60,6 +60,7 @@ toc()
 # 	fit(Growth ~ ., data = klaeger_data)
 
 ```
+
 ```{r}
 klaeger_folds <- vfold_cv(klaeger_data, v = 10)
 

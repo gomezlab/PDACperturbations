@@ -66,7 +66,7 @@ klaeger_full = bind_rows(klaeger_raw, missing_combos)
 # all(row_counts$n == 1)
 ```
 
-There are a few (\<200) NA entries in the data file, which appear to be
+There are a few NA entries (198) in the data file, which appear to be
 complete drug concentrations that are missing from the data file.
 Missing data makes the downstream modeling angry, so I’ll find all those
 missing values and simply interpolate the missing values as the average
@@ -115,7 +115,7 @@ included_drug_gene_combos = klaeger_raw %>%
     unique()
 
 missing_drug_genes_combos = crossing(drug = unique(klaeger_raw$drug),
-                                                    gene_name = unique(klaeger_raw$gene_name)) %>%
+                                                                         gene_name = unique(klaeger_raw$gene_name)) %>%
     setdiff(included_drug_gene_combos)
 
 percent_present  = signif(100*dim(included_drug_gene_combos)[1]/(dim(included_drug_gene_combos)[1] + dim(missing_drug_genes_combos)[1]),3)
@@ -128,7 +128,8 @@ of the number of listed gene hits per compound is:
 ``` r
 klaeger_counts = klaeger_raw %>% 
     group_by(drug) %>% 
-    summarise(num_kinases = length(unique(gene_name)))
+    summarise(num_kinases = length(unique(gene_name))) %>%
+    arrange(num_kinases)
 
 ggplot(klaeger_counts, aes(x=num_kinases)) + 
     geom_histogram() +
@@ -139,3 +140,17 @@ ggplot(klaeger_counts, aes(x=num_kinases)) +
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
 ![](klaeger_data_processing_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+for_heatmap = klaeger_full %>%
+    mutate(relative_intensity = ifelse(relative_intensity == 1, 1, 0)) %>%
+    # filter(drug == "Abemaciclib") %>%
+    pivot_wider(names_from = gene_name, values_from = relative_intensity) %>% 
+    mutate(drug_concen = paste0(drug,concentration_M)) %>% 
+    select(-drug,-concentration_M) %>% 
+    column_to_rownames(var = "drug_concen")
+
+image(as.matrix(for_heatmap),xlab='',xaxt='n',yaxt='n',col=c("#FFFFFF","#222222"))
+```
+
+![](klaeger_data_processing_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->

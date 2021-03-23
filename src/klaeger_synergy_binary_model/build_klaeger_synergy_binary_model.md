@@ -58,8 +58,7 @@ klaeger_data_matches_anchor = klaeger_data_matches %>%
 
 klaeger_data_matches_full = bind_rows(
     klaeger_data_matches_compound,
-    klaeger_data_matches_anchor
-) %>% 
+    klaeger_data_matches_anchor) %>% 
     mutate(viability_binary = as.factor(viability < 90)) %>%
     select(drug,drug_lower,pdac,cell_line,viability,viability_binary,everything())
 
@@ -76,88 +75,7 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
     select(-one_of(no_gene_variation$gene_name))
 ```
 
-\#Modeling
-
-``` r
-tic()
-
-metrics = data.frame()
-
-for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
-    
-    klaeger_matches_model_set = klaeger_data_matches_full %>%
-        filter(cell_line == this_cell_line) %>%
-        select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
-    
-    folds <- vfold_cv(klaeger_matches_model_set, v = 10)
-    
-    for (num_trees in seq(1000,5000,by=1000)) {
-        
-        rf_mod <-
-            rand_forest(trees = num_trees) %>%
-            set_engine("ranger", num.threads = 10) %>%
-            set_mode("classification")
-        
-        rf_wf <-
-            workflow() %>%
-            add_model(rf_mod) %>%
-            add_formula(viability_binary ~ .)
-        
-        rf_fit_rs <-
-            rf_wf %>%
-            fit_resamples(folds)
-        
-        metrics = rbind(
-            metrics,
-            collect_metrics(rf_fit_rs) %>% mutate(num_trees = num_trees, cell_line = this_cell_line)
-        )
-        
-    }
-}
-toc()
-
-# rf_fit = rf_mod %>%
-#   fit(Growth ~ ., data = klaeger_data)
-```
-
-``` r
-tic()
-
-metrics = data.frame()
-
-for (this_cell_line in unique(klaeger_data_matches_full$cell_line)[1]) {
-    
-    klaeger_matches_model_set = klaeger_data_matches_full %>%
-        filter(cell_line == this_cell_line) %>%
-        select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
-    
-    folds <- vfold_cv(klaeger_matches_model_set, v = 10)
-    
-    
-    rf_mod <-
-        rand_forest(trees = num_trees) %>%
-        set_engine("ranger", num.threads = 10) %>%
-        set_mode("classification")
-    
-    rf_mod <- 
-        rand_forest(mtry = tune(), min_n = tune(), trees = tune()) %>% 
-        set_engine("ranger", num.threads = 12) %>% 
-        set_mode("classification")
-    
-    rf_recipe <- 
-        recipe(viability_binary ~ ., data = klaeger_matches_model_set)
-    
-    rf_workflow <- 
-        workflow() %>% 
-        add_model(rf_mod) %>% 
-        add_recipe(rf_recipe)
-    
-    rf_res <- 
-        rf_workflow %>%
-        tune_grid(folds, grid = 25, control = control_grid(save_pred = TRUE), metrics = metric_set(roc_auc))
-}
-toc()
-```
+# Modeling
 
 ## Random Forest - Below 90 Predictions - Leave One Compound Out
 
@@ -206,7 +124,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 toc()
 ```
 
-    ## 88.189 sec elapsed
+    ## 86.964 sec elapsed
 
 ``` r
 # prediction_results = prediction_results %>% 
@@ -275,9 +193,6 @@ ROC_measurements = ROC_vals %>%
     
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
 
 ``` r
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
@@ -308,7 +223,7 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ## Random Forest - Below 90 Predictions - Leave One Compound/Concentration Out
 
@@ -364,7 +279,7 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rd
 toc()
 ```
 
-    ## 287.665 sec elapsed
+    ## 0.006 sec elapsed
 
 ``` r
 ROC_vals = bind_rows(
@@ -440,7 +355,109 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+## Random Forest - Below 90 Models - Variable Importance Models/Plots
+
+``` r
+tic()
+
+binary_90_models = list()
+
+prediction_results = c()
+for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
+    
+    klaeger_data_cell_line = klaeger_data_matches_full %>%
+        filter(cell_line == this_cell_line) %>%
+        select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
+    
+    splits <- initial_split(klaeger_data_cell_line)
+    
+    rf_mod <-
+        rand_forest(trees = 1000) %>%
+        set_engine("ranger", num.threads = 12, importance = "impurity") %>%
+        set_mode("classification")
+    
+    # binary_90_models[[this_cell_line]] <-
+    #   rf_mod %>%
+    #   fit(viability_binary_90 ~ ., data = klaeger_data_cell_line)
+    
+    rf_recipe <- 
+        recipe(viability_binary ~ ., data = klaeger_data_cell_line)
+    
+    rf_workflow <- 
+        workflow() %>% 
+        add_model(rf_mod) %>%
+        add_recipe(rf_recipe)
+    
+    binary_90_models[[this_cell_line]] <-
+        rf_workflow %>%
+        last_fit(splits)
+    
+}
+```
+
+    ## 
+    ## Attaching package: 'rlang'
+
+    ## The following objects are masked from 'package:purrr':
+    ## 
+    ##     %@%, as_function, flatten, flatten_chr, flatten_dbl, flatten_int,
+    ##     flatten_lgl, flatten_raw, invoke, list_along, modify, prepend,
+    ##     splice
+
+    ## 
+    ## Attaching package: 'vctrs'
+
+    ## The following object is masked from 'package:tibble':
+    ## 
+    ##     data_frame
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     data_frame
+
+``` r
+toc()
+```
+
+    ## 2.905 sec elapsed
+
+``` r
+binary_90_models[["CAF"]] %>% 
+    pluck(".workflow", 1) %>%
+    pull_workflow_fit() %>%
+    vip(num_features = 30)
+```
+
 ![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+binary_90_models[["NAF"]] %>% 
+    pluck(".workflow", 1) %>%
+    pull_workflow_fit() %>%
+    vip(num_features = 30)
+```
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+binary_90_models[["P1004"]] %>% 
+    pluck(".workflow", 1) %>%
+    pull_workflow_fit() %>%
+    vip(num_features = 30)
+```
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+binary_90_models[["P1304"]] %>% 
+    pluck(".workflow", 1) %>%
+    pull_workflow_fit() %>%
+    vip(num_features = 30)
+```
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Compound Out
 
@@ -494,7 +511,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 toc()
 ```
 
-    ## 67.725 sec elapsed
+    ## 70.811 sec elapsed
 
 ``` r
 # prediction_results = prediction_results %>% 
@@ -563,6 +580,9 @@ ROC_measurements = ROC_vals %>%
     
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
 
 ``` r
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
@@ -593,7 +613,7 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Compound/Concentration Out
 
@@ -633,7 +653,7 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_be
                     rf_mod %>%
                     fit(viability_binary ~ ., data = klaeger_train)
                 
-                these_prediction_results$predicted_viability =predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
+                these_prediction_results$predicted_viability = predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
                 these_prediction_results$actual_viability = klaeger_test$viability_binary
                 these_prediction_results$test_set_size = dim(klaeger_test)[1]
                 
@@ -649,7 +669,7 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_be
 toc()
 ```
 
-    ## 254.811 sec elapsed
+    ## 0.007 sec elapsed
 
 ``` r
 ROC_vals = bind_rows(
@@ -725,4 +745,4 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->

@@ -2,7 +2,7 @@
 title: "Process Synergy"
 author: "Matthew Berginski"
 date: "11/10/2020"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -54,7 +54,7 @@ synergy_data = synergy_data %>%
 	#from data set
 	#Maybe it isn't a problem? Conversation with Shawn 2-10-2021
 	# filter(cell_line != "NAF") %>%
-	select(-ind,-plate,-row,-col) %>%
+	# select(-ind,-plate,-row,-col) %>%
 	write_rds(here('data/synergy_combined.rds'))
 ```
 
@@ -208,7 +208,7 @@ ggplot(all_synergy_filtered_data, aes(x=dose_compound_m, y=viability, color=as.f
 ggplot(synergy_filtered[[4]][[4]], aes(x=dose_compound_m, y=viability, color=as.factor(dose_anchor_m))) + 
 	geom_line() +
 	geom_smooth(method="lm", se=F) +
-	labs(x="Dose Compound Concentration (M)",y="Cell Viability",)
+	labs(x="Dose Compound Concentration (M)",y="Cell Viability")
 BerginskiRMisc::theme_berginski()
 ```
 
@@ -222,11 +222,11 @@ ggplot(synergy_data %>% filter(anchor == "Abraxane",
 ```
 
 ```{r}
-temp_synergy = rbind(synergy_data_nested[[3]][[1]],
-										 synergy_data_nested[[3]][[2]] %>% group_by())
-
-ggplot(temp_synergy, aes(x=dose_compound_m,y=viability,color=as.factor(dose_anchor_m))) + 
-	geom_point() + 
-	geom_line() +
-	facet_wrap(~cell_line)
+# temp_synergy = rbind(synergy_data_nested[[3]][[1]],
+# 										 synergy_data_nested[[3]][[2]] %>% group_by())
+# 
+# ggplot(temp_synergy, aes(x=dose_compound_m,y=viability,color=as.factor(dose_anchor_m))) + 
+# 	geom_point() + 
+# 	geom_line() +
+# 	facet_wrap(~cell_line)
 ```

@@ -96,14 +96,15 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
         
         klaeger_test = klaeger_data_cell_line %>%
             filter(drug == exclude_compound) %>%
-            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability)
+            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability_binary,-viability)
         
         these_prediction_results = klaeger_data_cell_line %>%
             filter(drug == exclude_compound) %>%
-            select(drug,drug_lower,pdac,concentration_M,cell_line,viability_binary)
+            select(drug,drug_lower,pdac,concentration_M,cell_line,viability_binary,viability) %>%
+            rename(actual_viability_binary = viability_binary, actual_viability = viability)
         
         rf_mod <-
-            rand_forest(trees = 1000) %>%
+            rand_forest(trees = 5000) %>%
             set_engine("ranger", num.threads = 12) %>%
             set_mode("classification")
         
@@ -111,8 +112,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
             rf_mod %>%
             fit(viability_binary ~ ., data = klaeger_train)
         
-        these_prediction_results$predicted_viability =predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
-        these_prediction_results$actual_viability = klaeger_test$viability_binary
+        these_prediction_results$predicted_viability = predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
         these_prediction_results$test_set_size = dim(klaeger_test)[1]
         
         prediction_results = bind_rows(
@@ -124,7 +124,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 toc()
 ```
 
-    ## 86.964 sec elapsed
+    ## 334.034 sec elapsed
 
 ``` r
 # prediction_results = prediction_results %>% 
@@ -138,7 +138,7 @@ toc()
 ``` r
 assess_threshold = function(threshold,data) {
     data %>% 
-        mutate(actual_viability = as.logical(actual_viability)) %>%
+        mutate(actual_viability = as.logical(actual_viability_binary)) %>%
         mutate(above_thresh = predicted_viability >= threshold) %>% 
         summarise(cutoff = threshold,
                             TN = sum(! actual_viability & ! above_thresh),
@@ -190,9 +190,6 @@ ROC_measurements = ROC_vals %>%
     
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
 
 ``` r
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
@@ -231,9 +228,9 @@ full_plots
 tic()
 
 if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))) {
-    prediction_results_LO_concen = read_rds(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))
+    prediction_results_LOO_concen = read_rds(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))
 } else {
-    prediction_results_LO_concen = c()
+    prediction_results_LOO_concen = c()
     for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
         
         klaeger_data_cell_line = klaeger_data_matches_full %>%
@@ -244,18 +241,19 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rd
                 
                 klaeger_train = klaeger_data_cell_line %>%
                     filter(drug != exclude_compound, concentration_M != exclude_concentration) %>%
-                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
                 
                 klaeger_test = klaeger_data_cell_line %>%
                     filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
+                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability_binary,-viability)
                 
                 these_prediction_results = klaeger_data_cell_line %>%
                     filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-                    select(drug,drug_lower,pdac,concentration_M,cell_line)
+                    select(drug,drug_lower,pdac,concentration_M,cell_line,viability,viability_binary) %>%
+                    rename(actual_viability_binary = viability_binary, actual_viability = viability)
                 
                 rf_mod <-
-                    rand_forest(trees = 1000) %>%
+                    rand_forest(trees = 5000) %>%
                     set_engine("ranger", num.threads = 12) %>%
                     set_mode("classification")
                 
@@ -264,29 +262,28 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rd
                     fit(viability_binary ~ ., data = klaeger_train)
                 
                 these_prediction_results$predicted_viability =predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
-                these_prediction_results$actual_viability = klaeger_test$viability_binary
                 these_prediction_results$test_set_size = dim(klaeger_test)[1]
                 
-                prediction_results_LO_concen = bind_rows(
-                    prediction_results_LO_concen,
+                prediction_results_LOO_concen = bind_rows(
+                    prediction_results_LOO_concen,
                     these_prediction_results
                 )
             }
         }
-        write_rds(prediction_results_LO_concen,here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))
+        write_rds(prediction_results_LOO_concen,here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))
     }
 }
 toc()
 ```
 
-    ## 0.006 sec elapsed
+    ## 1286.861 sec elapsed
 
 ``` r
 ROC_vals = bind_rows(
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "CAF"), "CAF"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "NAF"), "NAF"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "P1004"), "P1004"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "P1304"), "P1304"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "CAF"), "CAF"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "NAF"), "NAF"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "P1004"), "P1004"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "P1304"), "P1304"),
 ) %>% rename(cell_line = prediction_type) %>%
     arrange(cell_line,desc(cutoff))
 
@@ -302,18 +299,6 @@ ROC_measurements = ROC_vals %>%
     select(-contains('rank'))
 ```
 
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
     
@@ -479,18 +464,19 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
         
         klaeger_train = klaeger_data_cell_line %>%
             filter(drug != exclude_compound) %>%
-            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
+            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability)
         
         klaeger_test = klaeger_data_cell_line %>%
             filter(drug == exclude_compound) %>%
-            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability)
+            select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability_binary,-viability)
         
         these_prediction_results = klaeger_data_cell_line %>%
             filter(drug == exclude_compound) %>%
-            select(drug,drug_lower,pdac,concentration_M,cell_line,viability_binary)
+            select(drug,drug_lower,pdac,concentration_M,cell_line,viability,viability_binary) %>%
+            rename(actual_viability_binary = viability_binary, actual_viability = viability)
         
         rf_mod <-
-            rand_forest(trees = 1000) %>%
+            rand_forest(trees = 5000) %>%
             set_engine("ranger", num.threads = 12) %>%
             set_mode("classification")
         
@@ -499,7 +485,6 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
             fit(viability_binary ~ ., data = klaeger_train)
         
         these_prediction_results$predicted_viability =predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
-        these_prediction_results$actual_viability = klaeger_test$viability_binary
         these_prediction_results$test_set_size = dim(klaeger_test)[1]
         
         prediction_results = bind_rows(
@@ -511,7 +496,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 toc()
 ```
 
-    ## 70.811 sec elapsed
+    ## 219.696 sec elapsed
 
 ``` r
 # prediction_results = prediction_results %>% 
@@ -520,32 +505,6 @@ toc()
 
 # rf_fit = rf_mod %>%
 #   fit(Growth ~ ., data = klaeger_data)
-```
-
-``` r
-assess_threshold = function(threshold,data) {
-    data %>% 
-        mutate(actual_viability = as.logical(actual_viability)) %>%
-        mutate(above_thresh = predicted_viability >= threshold) %>% 
-        summarise(cutoff = threshold,
-                            TN = sum(! actual_viability & ! above_thresh),
-                            FP = sum(! actual_viability & above_thresh),
-                            FN = sum(actual_viability & ! above_thresh),
-                            TP = sum(actual_viability & above_thresh))
-}
-
-gather_ROC_vals = function(input_data, prediction_type, sample_points = 50) {
-    ROC_vals = quantile(input_data$predicted_viability,seq(0,1,length.out = sample_points)) %>%
-        map(~ assess_threshold(., data=input_data)) %>%
-        reduce(rbind) %>%
-        mutate(TPR = TP/(TP+FN), 
-                     FPR = FP/(FP+TN),
-                     precision = TP/(TP+FP),
-                     recall = TP/(TP+FN)) %>%
-        mutate(prediction_type = prediction_type) %>%
-        identity()
-    return(ROC_vals)
-}
 ```
 
 ``` r
@@ -580,9 +539,6 @@ ROC_measurements = ROC_vals %>%
     
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
 
 ``` r
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
@@ -613,7 +569,7 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Compound/Concentration Out
 
@@ -621,9 +577,9 @@ full_plots
 tic()
 
 if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_below40.rds'))) {
-    prediction_results_LO_concen = read_rds(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_below40.rds'))
+    prediction_results_LOO_concen = read_rds(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_below40.rds'))
 } else {
-    prediction_results_LO_concen = c()
+    prediction_results_LOO_concen = c()
     for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
         
         klaeger_data_cell_line = klaeger_data_matches_full %>%
@@ -634,15 +590,16 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_be
                 
                 klaeger_train = klaeger_data_cell_line %>%
                     filter(drug != exclude_compound, concentration_M != exclude_concentration) %>%
-                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line) 
+                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability) 
                 
                 klaeger_test = klaeger_data_cell_line %>%
                     filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line)
+                    select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability,-viability_binary)
                 
                 these_prediction_results = klaeger_data_cell_line %>%
                     filter(drug == exclude_compound, concentration_M == exclude_concentration) %>%
-                    select(drug,drug_lower,pdac,concentration_M,cell_line)
+                    select(drug,drug_lower,pdac,concentration_M,cell_line,viability,viability_binary) %>%
+                    rename(actual_viability_binary = viability_binary, actual_viability = viability)
                 
                 rf_mod <-
                     rand_forest(trees = 1000) %>%
@@ -653,30 +610,29 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen_be
                     rf_mod %>%
                     fit(viability_binary ~ ., data = klaeger_train)
                 
-                these_prediction_results$predicted_viability = predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
-                these_prediction_results$actual_viability = klaeger_test$viability_binary
+                these_prediction_results$predicted_viability =predict(rf_fit_rs, klaeger_test, type = "prob")$.pred_TRUE
                 these_prediction_results$test_set_size = dim(klaeger_test)[1]
                 
-                prediction_results_LO_concen = bind_rows(
-                    prediction_results_LO_concen,
+                prediction_results_LOO_concen = bind_rows(
+                    prediction_results_LOO_concen,
                     these_prediction_results
                 )
             }
         }
-        write_rds(prediction_results_LO_concen,here('src/klaeger_synergy_binary_model/predictions_LOO_concen_below40.rds'))
+        write_rds(prediction_results_LOO_concen,here('src/klaeger_synergy_binary_model/predictions_LOO_concen_below40.rds'))
     }
 }
 toc()
 ```
 
-    ## 0.007 sec elapsed
+    ## 326.492 sec elapsed
 
 ``` r
 ROC_vals = bind_rows(
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "CAF"), "CAF"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "NAF"), "NAF"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "P1004"), "P1004"),
-    gather_ROC_vals(prediction_results_LO_concen %>% filter(cell_line == "P1304"), "P1304"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "CAF"), "CAF"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "NAF"), "NAF"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "P1004"), "P1004"),
+    gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "P1304"), "P1304"),
 ) %>% rename(cell_line = prediction_type) %>%
     arrange(cell_line,desc(cutoff))
 
@@ -703,18 +659,6 @@ ROC_measurements = ROC_vals %>%
     
     ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
     ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
-    
-    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
-    ## collapsing to unique 'x' values
 
 ``` r
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
@@ -745,4 +689,4 @@ full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
 full_plots
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->

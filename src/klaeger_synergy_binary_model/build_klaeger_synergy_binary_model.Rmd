@@ -28,7 +28,7 @@ klaeger_data_wide = klaeger_data %>%
 
 ```
 
-```{r combine synergy and klaeger}
+```{r combine synergy and klaeger, include=F}
 synergy_data_only_single = read_rds(here('data/synergy_combined.rds')) %>%
 	mutate(anchor_lower = tolower(anchor),
 				 compound_lower = tolower(compound)) %>%
@@ -88,7 +88,7 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
 
 ## Random Forest - Below 90 Predictions - Leave One Compound Out
 
-```{r, cache=T}
+```{r, cache=T, include=F}
 tic()
 
 prediction_results = c()
@@ -130,6 +130,7 @@ for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
 		)
 	}
 }
+
 toc()
 
 # prediction_results = prediction_results %>% 
@@ -141,7 +142,7 @@ toc()
 
 ```
 
-```{r}
+```{r, include=F}
 assess_threshold = function(threshold,data) {
 	data %>% 
 		mutate(actual_viability = as.logical(actual_viability_binary)) %>%
@@ -167,7 +168,7 @@ gather_ROC_vals = function(input_data, prediction_type, sample_points = 50) {
 }
 ```
 
-```{r}
+```{r, include=F}
 ROC_vals = bind_rows(
 	gather_ROC_vals(prediction_results %>% filter(cell_line == "CAF"), "CAF"),
 	gather_ROC_vals(prediction_results %>% filter(cell_line == "NAF"), "NAF"),
@@ -188,7 +189,7 @@ ROC_measurements = ROC_vals %>%
 	select(-contains('rank'))
 ```
 
-```{r,fig.height=5,fig.width=12}
+```{r,fig.height=5,fig.width=12, echo=F}
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
 
 AUC_plot = ggplot(ROC_vals) + 
@@ -197,6 +198,7 @@ AUC_plot = ggplot(ROC_vals) +
 	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
 	labs(x="FPR",y="TPR") +
 	theme(legend.position = "none") +
+	# ggtitle("Below 90 LOO Drug") +
 	BerginskiRMisc::theme_berginski()
 
 null_line = data.frame(x1 = 0, x2 = 1, 
@@ -207,7 +209,57 @@ PRC_plot = ggplot(ROC_vals) +
 	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
 	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
 	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
-	labs(x="Recall",y="Precision") +
+	labs(x="Recall",y="Precision", color="Cell Line") +
+	# xlim(c(0.075,0.25)) +
+	BerginskiRMisc::theme_berginski()
+
+ROC_table = tableGrob(ROC_measurements, row = rep("",dim(ROC_measurements)[1]))
+
+full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
+full_plots
+```
+```{r, include=F}
+ROC_vals = bind_rows(
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "CAF"), "CAF"),
+	# gather_ROC_vals(prediction_results %>% filter(cell_line == "NAF"), "NAF"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1004"), "P1004"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1304"), "P1304"),
+) %>% rename(cell_line = prediction_type) %>%
+	arrange(cell_line,desc(cutoff))
+
+ROC_measurements = ROC_vals %>% 
+	group_by(cell_line) %>% 
+	summarise("ROC_AUC" = signif(auc(x = 1 - FPR, y = TPR),3),
+						"PRC_AUC" = signif(auc(x = recall, y = precision),3)) %>%
+	ungroup() %>%
+	mutate("AUC_rank" = min_rank(ROC_AUC),
+				 "PRC_rank" = min_rank(PRC_AUC),
+				 "sum_rank" = AUC_rank + PRC_rank) %>%
+	arrange(desc(sum_rank)) %>%
+	select(-contains('rank'))
+```
+
+```{r,fig.height=5,fig.width=12,echo=F}
+null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
+
+AUC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
+	labs(x="FPR",y="TPR", color="Cell Line") +
+	theme(legend.position = "none") +
+	# ggtitle("Below 90 LOO Drug") +
+	BerginskiRMisc::theme_berginski()
+
+null_line = data.frame(x1 = 0, x2 = 1, 
+											 y1 = mean(as.logical(klaeger_data_matches_full$viability_binary)), 
+											 y2 = mean(as.logical(klaeger_data_matches_full$viability_binary)))
+
+PRC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
+	labs(x="Recall",y="Precision", color="Cell Line") +
 	# xlim(c(0.075,0.25)) +
 	BerginskiRMisc::theme_berginski()
 
@@ -219,7 +271,7 @@ full_plots
 
 ## Random Forest - Below 90 Predictions - Leave One Compound/Concentration Out
 
-```{r, cache=T}
+```{r, cache=T, include=F}
 tic()
 
 if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rds'))) {
@@ -271,7 +323,7 @@ if (file.exists(here('src/klaeger_synergy_binary_model/predictions_LOO_concen.rd
 toc()
 ```
 
-```{r}
+```{r, include=F}
 ROC_vals = bind_rows(
 	gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "CAF"), "CAF"),
 	gather_ROC_vals(prediction_results_LOO_concen %>% filter(cell_line == "NAF"), "NAF"),
@@ -292,7 +344,7 @@ ROC_measurements = ROC_vals %>%
 	select(-contains('rank'))
 ```
 
-```{r,fig.height=5,fig.width=12}
+```{r,fig.height=5,fig.width=12, echo=F}
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
 
 AUC_plot = ggplot(ROC_vals) + 
@@ -301,6 +353,7 @@ AUC_plot = ggplot(ROC_vals) +
 	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
 	labs(x="FPR",y="TPR") +
 	theme(legend.position = "none") +
+	ggtitle("Below 90 LOO Concentration") +
 	BerginskiRMisc::theme_berginski()
 
 null_line = data.frame(x1 = 0, x2 = 1, 
@@ -311,7 +364,58 @@ PRC_plot = ggplot(ROC_vals) +
 	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
 	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
 	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
-	labs(x="Recall",y="Precision") +
+	labs(x="Recall",y="Precision", color="Cell Line") +
+	# xlim(c(0.075,0.25)) +
+	BerginskiRMisc::theme_berginski()
+
+ROC_table = tableGrob(ROC_measurements, row = rep("",dim(ROC_measurements)[1]))
+
+full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
+full_plots
+```
+
+```{r, include=F}
+ROC_vals = bind_rows(
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "CAF"), "CAF"),
+	# gather_ROC_vals(prediction_results %>% filter(cell_line == "NAF"), "NAF"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1004"), "P1004"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1304"), "P1304"),
+) %>% rename(cell_line = prediction_type) %>%
+	arrange(cell_line,desc(cutoff))
+
+ROC_measurements = ROC_vals %>% 
+	group_by(cell_line) %>% 
+	summarise("ROC_AUC" = signif(auc(x = 1 - FPR, y = TPR),3),
+						"PRC_AUC" = signif(auc(x = recall, y = precision),3)) %>%
+	ungroup() %>%
+	mutate("AUC_rank" = min_rank(ROC_AUC),
+				 "PRC_rank" = min_rank(PRC_AUC),
+				 "sum_rank" = AUC_rank + PRC_rank) %>%
+	arrange(desc(sum_rank)) %>%
+	select(-contains('rank'))
+```
+
+```{r,fig.height=5,fig.width=12,echo=F}
+null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
+
+AUC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
+	labs(x="FPR",y="TPR") +
+	theme(legend.position = "none") +
+	# ggtitle("Below 90 LOO Drug") +
+	BerginskiRMisc::theme_berginski()
+
+null_line = data.frame(x1 = 0, x2 = 1, 
+											 y1 = mean(as.logical(klaeger_data_matches_full$viability_binary)), 
+											 y2 = mean(as.logical(klaeger_data_matches_full$viability_binary)))
+
+PRC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
+	labs(x="Recall",y="Precision",color="Cell Line") +
 	# xlim(c(0.075,0.25)) +
 	BerginskiRMisc::theme_berginski()
 
@@ -323,7 +427,7 @@ full_plots
 
 ## Random Forest - Below 90 Models - Variable Importance Models/Plots
 
-```{r, cache=T}
+```{r, cache=T, include=F}
 tic()
 
 binary_90_models = list()
@@ -397,7 +501,7 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
 	mutate(viability_binary = as.factor(viability < 40))
 ```
 
-```{r, cache=T}
+```{r, cache=T, include=F}
 tic()
 
 prediction_results = c()
@@ -450,7 +554,7 @@ toc()
 
 ```
 
-```{r}
+```{r, include=F}
 ROC_vals = bind_rows(
 	gather_ROC_vals(prediction_results %>% filter(cell_line == "CAF"), "CAF"),
 	gather_ROC_vals(prediction_results %>% filter(cell_line == "NAF"), "NAF"),
@@ -471,15 +575,16 @@ ROC_measurements = ROC_vals %>%
 	select(-contains('rank'))
 ```
 
-```{r,fig.height=5,fig.width=12}
+```{r,fig.height=5,fig.width=12, echo=F}
 null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
 
 AUC_plot = ggplot(ROC_vals) + 
 	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
 	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
 	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
-	labs(x="FPR",y="TPR") +
+	labs(x="FPR",y="TPR", color='Cell Line') +
 	theme(legend.position = "none") +
+	ggtitle("Below 40 LOO Drug") +
 	BerginskiRMisc::theme_berginski()
 
 null_line = data.frame(x1 = 0, x2 = 1, 
@@ -491,6 +596,59 @@ PRC_plot = ggplot(ROC_vals) +
 	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
 	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
 	labs(x="Recall",y="Precision") +
+	# xlim(c(0.075,0.25)) +
+	BerginskiRMisc::theme_berginski()
+
+ROC_table = tableGrob(ROC_measurements, row = rep("",dim(ROC_measurements)[1]))
+
+full_plots = ggarrange(AUC_plot, PRC_plot, ROC_table,nrow=1)
+full_plots
+```
+
+### Same Plot as above but no NAF line
+
+```{r, include=F}
+ROC_vals = bind_rows(
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "CAF"), "CAF"),
+	# gather_ROC_vals(prediction_results %>% filter(cell_line == "NAF"), "NAF"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1004"), "P1004"),
+	gather_ROC_vals(prediction_results %>% filter(cell_line == "P1304"), "P1304"),
+) %>% rename(cell_line = prediction_type) %>%
+	arrange(cell_line,desc(cutoff))
+
+ROC_measurements = ROC_vals %>% 
+	group_by(cell_line) %>% 
+	summarise("ROC_AUC" = signif(auc(x = 1 - FPR, y = TPR),3),
+						"PRC_AUC" = signif(auc(x = recall, y = precision),3)) %>%
+	ungroup() %>%
+	mutate("AUC_rank" = min_rank(ROC_AUC),
+				 "PRC_rank" = min_rank(PRC_AUC),
+				 "sum_rank" = AUC_rank + PRC_rank) %>%
+	arrange(desc(sum_rank)) %>%
+	select(-contains('rank'))
+```
+
+```{r,fig.height=5,fig.width=12, echo=F}
+null_line = data.frame(x1 = 0, x2 = 1, y1 = 0, y2 = 1)
+
+AUC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
+	labs(x="FPR",y="TPR") +
+	theme(legend.position = "none") +
+	ggtitle("Below 40 LOO Drug") +
+	BerginskiRMisc::theme_berginski()
+
+null_line = data.frame(x1 = 0, x2 = 1, 
+											 y1 = mean(as.logical(klaeger_data_matches_full$viability_binary)), 
+											 y2 = mean(as.logical(klaeger_data_matches_full$viability_binary)))
+
+PRC_plot = ggplot(ROC_vals) + 
+	geom_segment(data=null_line, mapping=aes(x=x1,y=y1,xend=x2,yend=y2),alpha=0.25) +
+	# geom_point(aes(x=FPR,y=TPR, color=cell_line),lwd=1) + 
+	geom_line(aes(x=recall,y=precision, color=cell_line),lwd=1) +
+	labs(x="Recall",y="Precision", color='Cell Line') +
 	# xlim(c(0.075,0.25)) +
 	BerginskiRMisc::theme_berginski()
 
@@ -585,6 +743,7 @@ AUC_plot = ggplot(ROC_vals) +
 	geom_line(aes(x=FPR,y=TPR, color=cell_line),lwd=1) +
 	labs(x="FPR",y="TPR") +
 	theme(legend.position = "none") +
+	ggtitle("Below 40 LOO Concentration") +
 	BerginskiRMisc::theme_berginski()
 
 null_line = data.frame(x1 = 0, x2 = 1, 

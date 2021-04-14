@@ -15,3 +15,7 @@ Data and code associated with pancreatic cancer drug screening and modeling
   * Random forest modeling code to try to predict the cell viability values in the single drug treatments in the synergy data from the Klaeger kinase activation values
 * Synergy Screen + Klaeger to Predict Binary Viability Values: [here](src/klaeger_synergy_binary_model/build_klaeger_synergy_binary_model.md)
   * Random forest modeling code to try to predict binarized (below 90 and below 40) cell viability values in the single drug treatments in the synergy data from the Klaeger kinase activation values
+
+## Prediction Results
+
+* Predicting the binary outcome for the rest of the Klaeger compounds: [here](src/klaeger_synergy_binary_predictions/build_klaeger_synergy_binary_predictions.md)

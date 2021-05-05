@@ -1,7 +1,7 @@
-Make Klaeger Synergy Viability Predictions
+Klaeger Synergy Viability Predictions
 ================
 Matthew Berginski
-2021-04-13
+2021-05-05
 
 # Read In and Combine Klaeger/Synergy Data
 
@@ -26,140 +26,84 @@ plates per cell line.
 
 # Modeling
 
-## Random Forest - Below 90 Models
+Build two sets of random forest models, one to predict whether a
+compound at a concentration will cause cell viability to dip below 90%
+and another to predict cell viability below 40%. Unique models are built
+for each of the cell lines in the data set.
 
-``` r
-tic()
+# Make Predictions Using Models
 
-binary_90_models = list()
+Now to use the models to make predictions on the remainder of the
+compounds in the Klaeger data set and build a few plots showing the
+distribution of viability predictions.
 
-prediction_results = c()
-for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
-    
-    klaeger_data_cell_line = klaeger_data_matches_full %>%
-        filter(cell_line == this_cell_line) %>%
-        select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability,-viability_binary_40) 
-    
-    rf_mod <-
-        rand_forest(trees = 1000) %>%
-        set_engine("ranger", num.threads = 12) %>%
-        set_mode("classification")
-    
-    binary_90_models[[this_cell_line]] <-
-        rf_mod %>%
-        fit(viability_binary_90 ~ ., data = klaeger_data_cell_line)
-}
-toc()
-```
-
-    ## 2.212 sec elapsed
-
-## Random Forest - Below 40 Models
-
-``` r
-tic()
-
-binary_40_models = list()
-
-prediction_results = c()
-for (this_cell_line in unique(klaeger_data_matches_full$cell_line)) {
-    
-    klaeger_data_cell_line = klaeger_data_matches_full %>%
-        filter(cell_line == this_cell_line) %>%
-        select(-drug,-drug_lower,-pdac,-concentration_M,-cell_line,-viability,-viability_binary_90) 
-    
-    rf_mod <-
-        rand_forest(trees = 1000) %>%
-        set_engine("ranger", num.threads = 12) %>%
-        set_mode("classification")
-    
-    binary_40_models[[this_cell_line]] <-
-        rf_mod %>%
-        fit(viability_binary_40 ~ ., data = klaeger_data_cell_line)
-}
-toc()
-```
-
-    ## 1.682 sec elapsed
-
-# Predictions
-
-## Below 90
-
-``` r
-below_90_predictions = data.frame()
-
-klaeger_prediction_wide_model_set = klaeger_prediction_wide %>%
-    select(-drug,-concentration_M)
-
-for (this_cell_line in names(binary_90_models)) {
-    this_cell_predictions = data.frame(
-        drug = klaeger_prediction_wide$drug,
-        concentration_M = klaeger_prediction_wide$concentration_M,
-        cell_line = this_cell_line,
-        prob_below_90 = predict(binary_90_models[[this_cell_line]],klaeger_prediction_wide_model_set, type="prob")$.pred_TRUE)
-
-    below_90_predictions = bind_rows(
-        below_90_predictions,
-        this_cell_predictions
-    )
-}
-
-below_90_predictions_cell = below_90_predictions %>% 
-    pivot_wider(names_from = "cell_line", values_from = "prob_below_90") %>%
-    mutate(caf_naf_diff = NAF - CAF)
-```
-
-``` r
-ggplot(below_90_predictions, aes(x=prob_below_90)) + geom_histogram()
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## Below 90% Cell Viability
 
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-``` r
-ggplot(below_90_predictions, aes(x=prob_below_90)) + geom_histogram() + facet_wrap(~cell_line)
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-## Below 40
-
-``` r
-below_40_predictions = data.frame()
-
-klaeger_prediction_wide_model_set = klaeger_prediction_wide %>%
-    select(-drug,-concentration_M)
-
-for (this_cell_line in names(binary_40_models)) {
-    this_cell_predictions = data.frame(
-        drug = klaeger_prediction_wide$drug,
-        concentration_M = klaeger_prediction_wide$concentration_M,
-        cell_line = this_cell_line,
-        prob_below_40 = predict(binary_40_models[[this_cell_line]],klaeger_prediction_wide_model_set, type="prob")$.pred_TRUE)
-
-    below_40_predictions = bind_rows(
-        below_40_predictions,
-        this_cell_predictions
-    )
-}
-```
-
-``` r
-ggplot(below_40_predictions, aes(x=prob_below_40)) + geom_histogram()
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## Below 40% Cell Viability
 
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-``` r
-ggplot(below_40_predictions, aes(x=prob_below_40)) + geom_histogram() + facet_wrap(~cell_line)
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+# Looking for Compounds to Test - Below 90 Predictions
+
+With predictions of the likelihood that the compounds will push cell
+viability below 90% or below 40%, the next step is to try to use these
+predictions to pick out compound that are likely to have interesting
+viability results. As for what interesting means, I’ve collected four
+types of interesting results:
+
+  - Compounds with Low Predicted Effect on Viability: Pick out the
+    compounds that are predicted to have no/minimal effect on viability.
+    This might seem to be the least interesting type of prediction at
+    first, but a model is only as good as it’s ability to predict
+    negative as well as positive results.
+  - Compounds with High Predicted Effect on Viability: Pick out the
+    compounds that are predicted to strongly decrease cell viability.
+  - Compounds with Large Differences across Concentrations: Pick out
+    compounds where the likelihood of affecting cell viability changes
+    across the predicted concentrations. These should be compounds where
+    low concentrations don’t affect cell viability, while high
+    concentrations start to inhibit cell growth.
+  - Compounds with Large Differences across Cell Lines: Pick out the
+    compounds with large differences between the cell lines. This one
+    seems kind of obvious as well, but if the model predicts large
+    differences between the cell lines, this is probably worth testing
+
+As for calculating all these, I’ve taken an approach that looks across
+all the cell lines simultaneously. Searching for across the board low
+effect and high effects is done by looking for the lowest and highest
+average probability on a per compound basis. Searching for large
+differences across concentrations is done by looking for the compounds
+with the highest range between probabilities. The final criteria
+(differences between cell lines) is a bit tougher to quantify, but what
+I’ve done is:
+
+  - matched up all the predictions across compound and concentration for
+    each cell line
+  - calculated the absolute value of all the combination of differences
+    in probability value
+      - We have three cell lines here (CAF, P1004 and P1304), so three
+        combinations (CAF/P1004), (CAF/P1304) and (P1004/P1304)
+  - find the compounds with the largest mean value across all
+    differences
+
+## Compounds with Low Predicted Effect
+
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+## Compounds with High Predicted Effect
+
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+## Compounds with High Predicted Differences Across Concentrations
+
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+## Compounds with High Predicted Differences Between Cell Lines
+
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->

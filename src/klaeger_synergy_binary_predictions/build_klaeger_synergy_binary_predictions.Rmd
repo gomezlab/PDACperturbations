@@ -318,7 +318,7 @@ build_probablity_plots <- function(data_set) {
 
 ## Compounds with Low Predicted Effect
 
-```{r, echo = F}
+```{r, echo = F, fig.width = 10}
 ten_lowest_effect = below_90_diffs %>%
 	arrange(mean_prob) %>%
 	slice(1:10)

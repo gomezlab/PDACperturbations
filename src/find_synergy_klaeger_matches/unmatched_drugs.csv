@@ -1,0 +1,172 @@
+klaeger_drugs,synergy_drugs
+Abemaciclib,(-)-JQ1
+AC-480,(+)-JQ1
+ACTB-1003,17-AAG (Tanespimycin)
+AEE-788,5-azacytidine
+Alectinib,A-366
+AMG-208,Abexinostat (PCI-24781)
+AMG-900,Abraxane
+Amuvatinib,ABT-263 (Navitoclax)
+Apatinib,Alpelisib (BYL719)
+Apitolisib,AP26113
+ARRY-380,AR-42 (HDAC-42)
+ASP-3026,AZ 960
+AT-13148,AZ191
+AT-9283,AZ505
+AV-412,Bardoxolone Methyl
+AXL-1717,Belinostat
+AZD-1480,BGJ398 (NVP-BGJ398)
+AZD-4547,BI-D1870
+AZD-5363,"BKM120 (NVP-BKM120, Buparlisib)"
+AZD-5438,Bortezomib
+AZD-6482,Bromosporine
+AZD-7762,C646
+AZD-8055,"CAL-101 (Idelalisib, GS-1101)"
+AZD-8186,CAY10603
+AZD-8330,CCT128930
+Bafetinib,CDK9 inhibitor 2
+Barasertib,CHIR-99021 (CT99021) HCl
+Baricitinib,CI994
+BGT-226,CPI-360
+BI-847325,CUCD-907
+Binimetinib,Dacinostat (NVP-LAQ824)
+BMS-387032,Decitabine (5-aza-2'-deoxycytidine)
+BMS-690514,DMSO
+BMS-911543,Droxinostat
+Bosutinib,Entinostat
+Brivanib,Entinostat (MS-275)
+Brivanib_alaninate,EPZ015666
+BYL-719,Everolimus (RAD001)
+Canertinib,EW-7197
+Capmatinib,Ex527
+CC-401,FOLFIRINOX
+Cediranib,FOLFOX
+CEP-32496,FRAX-1036
+Cerdulatinib,Gemcitabine
+Ceritinib,Givinostat (ITF2357)
+CH-5183284,GSK-J4
+Cobimetinib,GSK-LSD1
+Copanlisib,GSK126
+CP-547632,GSK1838705A
+CP-724714,GSK2801
+Crenolanib,GSK343
+Cyc-116,GSK650394
+Dacomitinib,I-BET151
+Decernotinib,I-CBP112
+Deforolimus,iCRT 14
+Encorafenib,Idarubicin HCl
+ENMD-2076,IOX1
+Entrectinib,IOX2
+Enzastaurin,JIB-04
+Filgotinib,JNK-IN-8
+Foretinib,K02288
+Fostamatinib,KH-CB19
+Galunisertib,KU-55933 (ATM Kinase Inhibitor)
+GDC-0994,Lactam E ring (Camptothecin (CPT))
+Gilteritinib,LBH-589 (Panobinostat)
+Golvatinib,LDN-212854
+GSK-1059615,LGK-974
+GSK-1070916,LLY-507
+GSK-2110183,Lorlatinib (PF-06463922)
+GSK-461364,Luminespib (AUY-922)
+HMN-214,M344
+Hydroxyfasudil,MC1568
+Icotinib,Methylstat (JMJD Inhibitor IV)
+IMD-0354,Mocetinostat (MGCD0103)
+JANEX-1,NVP-BHG712
+JNJ-26483327,"Olaparib (AZD2281, Ku-0059436)"
+JNJ-38877605,OTX015
+K-252a,Paricalcitol
+KW-2449,PCI-34051
+Lenvatinib,PF-4708671
+Lestaurtinib,PF-573228
+Linifanib,PFI-2
+Linsitinib,PFI-3
+Lucitanib,PFI-4
+LY-2801653,PLX-4720
+Masitinib,PLX7904
+MGCD-265,Pracinostat (SB939)
+Milciclib,Quisinostat (JNJ-26481585)
+MK-2461,Rapamycin (Sirolimus)
+MK-5108,RG108
+MK-8033,RGFP966
+MLN-2480,Romidepsin (FK228)
+MLN-8054,SB525334
+Momelotinib,SCH772984
+Motesanib,Semagacestat (LY450139)
+Mubritinib,SGC-CBP30
+Nilotinib,SGC0946
+NMS-1286937,SGC707
+ONO-4059 analogue,SGI-1027
+Orantinib,SMI-4a
+OSI-027,SP600125
+OSI-930,SRPIN340
+Osimertinib,TAE226 (NVP-TAE226)
+OTS-167,TG003
+P-276-00,TGX-221
+Pacritinib,THZ1
+Pazopanib,Topotecan
+PD-325901,Trichostatin A (TSA)
+Pelitinib,Tubastatin
+Pexidartinib,UMI-77
+Pexmetinib,UNC0379
+PF-03814735,UNC0631
+PF-04217903,UNC0638
+PF-04691502,UNC0642
+PF-477736,UNC1215
+PF-562271,UNC1999
+PHA-793887,UNC2327
+Pimasertib,UNC2400
+Ponatinib,Veliparib (ABT-888)
+Poziotinib,Vismodegib (GDC-0449)
+Quizartinib,Vorinostat (SAHA)
+R-547,XAV-939
+Rabusertib,Y-27632 2HCl
+RAF-265,Zebularine
+RDEA-436,
+Rebastinib,
+Refametinib,
+Regorafenib,
+RGB-286638,
+Ribociclib,
+Rigosertib,
+Ripasudil,
+Ro-4987655,
+Ro-5126766,
+Rociletinib,
+Ruboxistaurin,
+Sapanisertib,
+Sapitinib,
+SAR-407899,
+SB-1317,
+Seliciclib,
+SGX-523,
+SNS-314,
+Sonolisib,
+Sotrastaurin,
+SU-14813,
+TAK-285,
+TAK-593,
+TAK-733,
+TAK-901,
+Talmapimod,
+Tandutinib,
+Tanzisertib,
+Telatinib,
+Tepotinib,
+Tesevatinib,
+TG-100115,
+TG-100572,
+TG-100801,
+Tivantinib,
+Tivozanib,
+UCN-01,
+Uprosertib,
+Varlitinib,
+Volitinib,
+VX-702,
+X-396,
+XL-019,
+XL-228,
+XL-413,
+Y-39983,

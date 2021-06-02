@@ -1,13 +1,13 @@
 Find Synergy-Klaeger Drug Matches
 ================
 Matthew Berginski
-2021-06-01
+2021-06-02
 
 ``` r
-klaeger = read_rds(here('data/klaeger_full_tidy.rds')) %>%
+klaeger = read_rds(here('results/klaeger_full_tidy.rds')) %>%
     mutate(drug = trimws(drug))
 
-synergy = read_rds(here('data/synergy_combined.rds')) %>%
+synergy = read_rds(here('results/synergy_combined.rds')) %>%
     mutate(anchor = trimws(anchor), compound = trimws(compound))
 
 klaeger_drugs = unique(klaeger$drug) %>% sort()

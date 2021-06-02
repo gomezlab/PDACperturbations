@@ -9,6 +9,13 @@ Data and code associated with pancreatic cancer drug screening and modeling
 * Klaeger Data: [here](src/process_klaeger_data/klaeger_data_processing.md)
   * Organizes the Klaeger data for downstream processing
 
+### Compound Matching
+
+Most of the compound names in the synergy/Klaeger collections don't match up exactly, so we had to go through and manually match most of the shared compounds.
+
+* Report [here](src/find_synergy_klaeger_matches/find_synergy_klaeger_matches.md)
+
+
 ## Modeling Results
 
 * Synergy Screen + Klaeger to Predict Raw Viability Values: [here](src/klaeger_synergy_model/build_klaeger_synergy_model.md)

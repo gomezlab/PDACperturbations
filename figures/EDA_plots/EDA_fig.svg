@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="2550"
+   height="2034.7083"
+   viewBox="0 0 674.68748 538.3499"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   sodipodi:docname="EDA_fig.svg"
+   inkscape:export-filename="./EDA_fig.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
+  <defs
+     id="defs2">
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker1289"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path1287"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker1195"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path1193"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker1137"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path1135"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker10490"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path10488"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker10432"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path10430"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker10380"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path10378"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lend"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path9951"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lend"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path9969"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <style
+       id="style815"
+       type="text/css"><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+  ]]></style>
+    <clipPath
+       id="cpMC4wMHw1MjUuMDB8MC4wMHwzMjQuMDA=">
+      <rect
+         id="rect821"
+         height="324"
+         width="525"
+         y="0"
+         x="0" />
+    </clipPath>
+    <clipPath
+       id="cpNDkuOTB8NTE5LjUyfDUuNDh8MjkzLjU0">
+      <rect
+         id="rect830"
+         height="288.06"
+         width="469.62"
+         y="5.48"
+         x="49.900002" />
+    </clipPath>
+    <style
+       id="style923"
+       type="text/css"><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+  ]]></style>
+    <clipPath
+       id="cpMC4wMHw2OTguMjV8MC4wMHw0MzIuMDA=">
+      <rect
+         id="rect929"
+         height="432"
+         width="698.25"
+         y="0"
+         x="0" />
+    </clipPath>
+    <clipPath
+       id="cpOTYuNDV8NjkyLjc3fDUuNDh8NDAxLjU0">
+      <rect
+         id="rect938"
+         height="396.06"
+         width="596.32001"
+         y="5.48"
+         x="96.449997" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="649.15618"
+     inkscape:cy="950.05624"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="2488"
+     inkscape:window-height="1369"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:document-rotation="0">
+    <sodipodi:guide
+       position="243.79465,285.39065"
+       orientation="1,0"
+       id="guide10638"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(3.7699938e-6,-13.802659)">
+    <rect
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.234863;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1558"
+       width="122.99898"
+       height="27.165737"
+       x="14.469817"
+       y="14.298066" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:14.1111px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="498.92859"
+       y="-285.08334"
+       id="text1562" />
+    <flowRoot
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       id="flowRoot1568-8"
+       transform="matrix(3.7795276,0,0,3.7795276,577.04441,1337.7058)"><flowRegion
+         id="flowRegion1570-5"
+         style="text-align:center;text-anchor:middle"><use
+           x="0"
+           y="0"
+           xlink:href="#rect1558-3"
+           id="use1572-6"
+           width="100%"
+           height="100%"
+           transform="matrix(0.26458333,0,0,0.26458333,-152.67633,-353.93466)" /></flowRegion><flowPara
+         id="flowPara1574-1">Pancreatic Cancer Cell </flowPara><flowPara
+         id="flowPara1576-1">Line Viability Data</flowPara></flowRoot>
+    <g
+       id="g9530"
+       transform="translate(-21.316802,-32.606876)">
+      <rect
+         y="131.60803"
+         x="35.786617"
+         height="27.165737"
+         width="122.99898"
+         id="rect1558-3"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.234863;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <flowRoot
+         transform="translate(0,1.0583333)"
+         id="flowRoot9517"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         xml:space="preserve"><flowRegion
+           id="flowRegion9519"><use
+             height="100%"
+             width="100%"
+             id="use9521"
+             xlink:href="#rect1558-3"
+             y="0"
+             x="0" /></flowRegion><flowPara
+           id="flowPara9523">Klaeger et al. Kinase Activations</flowPara></flowRoot>
+    </g>
+    <flowRoot
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       id="flowRoot1568-4"
+       transform="matrix(3.7795276,0,0,3.7795276,-186.44841,340.42356)"><flowRegion
+         id="flowRegion1570-4"
+         style="text-align:center;text-anchor:middle"><use
+           x="0"
+           y="0"
+           xlink:href="#rect1558-0"
+           id="use1572-4"
+           width="100%"
+           height="100%"
+           transform="matrix(0.26458333,0,0,0.26458333,49.331141,-90.070398)" /></flowRegion><flowPara
+         id="flowPara1574-4">Pancreatic Cancer Cell </flowPara><flowPara
+         id="flowPara1576-7">Line Viability Data</flowPara></flowRoot>
+    <g
+       id="g9604"
+       transform="translate(-38.629184)">
+      <rect
+         y="13.925466"
+         x="198.93149"
+         height="27.910938"
+         width="130.92574"
+         id="rect1558-0"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.245614;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <flowRoot
+         id="flowRoot9591"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         xml:space="preserve"><flowRegion
+           id="flowRegion9593"><use
+             id="use9595"
+             xlink:href="#rect1558-0"
+             y="0"
+             x="0"
+             width="100%"
+             height="100%" /></flowRegion><flowPara
+           id="flowPara9597">Filter Data Set to Single Compound Treatments</flowPara></flowRoot>
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
+       d="M 137.46879,27.880935 H 160.3023"
+       id="path9606"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-end="#g9604"
+       inkscape:connection-start="#rect1558" />
+    <rect
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.197581;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1558-3-2-5"
+       width="81.200356"
+       height="29.122309"
+       x="333.21823"
+       y="50.852818" />
+    <flowRoot
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       id="flowRoot9517-1-9"
+       transform="matrix(3.7795276,0,0,3.7795276,97.655428,-660.08326)"><flowRegion
+         id="flowRegion9519-7-7"><use
+           transform="matrix(0.26458333,0,0,0.26458333,-25.837998,174.64703)"
+           x="0"
+           y="0"
+           xlink:href="#rect1558-3-2-5"
+           id="use9521-8-5"
+           width="100%"
+           height="100%" /></flowRegion><flowPara
+         id="flowPara9523-5-3">Organize Data by Compound</flowPara><flowPara
+         id="flowPara9638-8">Fill Missing Values</flowPara></flowRoot>
+    <flowRoot
+       id="flowRoot9703"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       xml:space="preserve"
+       transform="translate(183.3469,-32.606892)"><flowRegion
+         id="flowRegion9705"><use
+           transform="translate(-183.3469,32.606892)"
+           height="100%"
+           width="100%"
+           id="use9707"
+           xlink:href="#rect1558-3-2-5"
+           y="0"
+           x="0" /></flowRegion><flowPara
+         id="flowPara9711">Combine Data </flowPara><flowPara
+         id="flowPara9713">Sets</flowPara></flowRoot>
+    <rect
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.284515;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1558-3-2-5-6"
+       width="106.05985"
+       height="46.233299"
+       x="436.8273"
+       y="44.659679" />
+    <flowRoot
+       id="flowRoot9703-4"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       xml:space="preserve"
+       transform="matrix(3.7795276,0,0,3.7795276,-798.62145,-365.5944)"><flowRegion
+         id="flowRegion9705-3"><use
+           transform="matrix(0.26458333,0,0,0.26458333,211.30193,96.730184)"
+           height="100%"
+           width="100%"
+           id="use9707-3"
+           xlink:href="#rect1558-3-2-5-6"
+           y="0"
+           x="0" /></flowRegion><flowPara
+         id="flowPara9711-3">Combine Data </flowPara><flowPara
+         id="flowPara9713-8">Sets</flowPara></flowRoot>
+    <flowRoot
+       transform="translate(183.3469,-29.431892)"
+       id="flowRoot9776"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       xml:space="preserve"><flowRegion
+         id="flowRegion9778"><use
+           transform="translate(-183.3469,29.431892)"
+           height="100%"
+           width="100%"
+           id="use9780"
+           xlink:href="#rect1558-3-2-5-6"
+           y="0"
+           x="0" /></flowRegion><flowPara
+         id="flowPara9784">Predict Cell Viability from Kinase Acitvation States</flowPara></flowRoot>
+    <flowRoot
+       transform="matrix(3.7795276,0,0,3.7795276,-1202.6098,56.80441)"
+       id="flowRoot9776-7"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       xml:space="preserve"><flowRegion
+         id="flowRegion9778-7"><use
+           transform="matrix(0.26458333,0,0,0.26458333,366.70105,-23.65674)"
+           height="100%"
+           width="100%"
+           id="use9780-6"
+           xlink:href="#rect1558-3-2-5-6-9"
+           y="0"
+           x="0" /></flowRegion><flowPara
+         id="flowPara9784-4">Predict Cell Viability from Kinase Acitvation States</flowPara></flowRoot>
+    <g
+       transform="translate(225.907,-133.90451)"
+       id="g9852">
+      <rect
+         y="178.73427"
+         x="341.92673"
+         height="46.233303"
+         width="106.05985"
+         id="rect1558-3-2-5-6-9"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.284515;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <flowRoot
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         id="flowRoot9839"
+         transform="translate(0,2.6458334)"><flowRegion
+           id="flowRegion9841"><use
+             x="0"
+             y="0"
+             xlink:href="#rect1558-3-2-5-6-9"
+             id="use9843"
+             width="100%"
+             height="100%" /></flowRegion><flowPara
+           id="flowPara9845">Predict Effect on Cell Viability for New Compounds</flowPara></flowRoot>
+    </g>
+    <path
+       inkscape:connection-end="#rect1558-3-2-5"
+       inkscape:connection-start="#g9604"
+       inkscape:connector-curvature="0"
+       inkscape:connector-type="polyline"
+       id="path9856"
+       d="m 280.81407,41.836404 52.40416,13.285"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker10380)" />
+    <path
+       inkscape:connection-end="#rect1558-3-2-5-6"
+       inkscape:connection-start="#rect1558-3-2-5"
+       inkscape:connector-curvature="0"
+       inkscape:connector-type="polyline"
+       id="path9860"
+       d="m 414.41859,66.240524 22.40871,0.456204"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker10432)" />
+    <path
+       inkscape:connection-end="#g9852"
+       inkscape:connection-start="#rect1558-3-2-5-6"
+       inkscape:connector-curvature="0"
+       inkscape:connector-type="polyline"
+       id="path9862"
+       d="m 542.88715,67.845176 24.94658,0.03239"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker10490)" />
+    <g
+       id="g9936"
+       transform="translate(-16.93335)">
+      <rect
+         y="99.000298"
+         x="177.24413"
+         height="27.167448"
+         width="153.7068"
+         id="rect1558-3-2"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.262557;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <flowRoot
+         id="flowRoot9920"
+         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         xml:space="preserve"><flowRegion
+           id="flowRegion9922"><use
+             id="use9924"
+             xlink:href="#rect1558-3-2"
+             y="0"
+             x="0"
+             width="100%"
+             height="100%" /></flowRegion><flowPara
+           id="flowPara9926">Organize Data by Compound</flowPara><flowPara
+           id="flowPara9928">Fill Missing Values</flowPara></flowRoot>
+    </g>
+    <flowRoot
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       id="flowRoot9938"><flowRegion
+         id="flowRegion9940"><use
+           x="0"
+           y="0"
+           xlink:href="#rect1558"
+           id="use9942"
+           width="100%"
+           height="100%" /></flowRegion><flowPara
+         id="flowPara9944">Pancreatic Cancer Cell </flowPara><flowPara
+         id="flowPara9946">Line Viability Data</flowPara></flowRoot>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:17.6389px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-0.13780768"
+       y="27.039463"
+       id="text10548"><tspan
+         sodipodi:role="line"
+         id="tspan10546"
+         x="-0.13780768"
+         y="27.039463"
+         style="font-size:17.6389px;stroke-width:0.264583">A</tspan></text>
+    <g
+       id="g1000"
+       transform="matrix(0.98379629,0,0,0.98379629,-6.0967172e-8,2.4941023)">
+      <image
+         sodipodi:absref="/home/mbergins/Documents/Projects/PDACperturbations/figures/EDA_plots/cell_line_viability_plots.png"
+         xlink:href="cell_line_viability_plots.png"
+         width="235.65996"
+         height="402.20709"
+         preserveAspectRatio="none"
+         id="image1007"
+         x="-3.7625432e-06"
+         y="153.92165" />
+      <image
+         sodipodi:absref="/home/mbergins/Documents/Projects/PDACperturbations/figures/EDA_plots/compound_viability_plots.png"
+         xlink:href="compound_viability_plots.png"
+         width="439.03656"
+         height="404.79001"
+         preserveAspectRatio="none"
+         id="image1021"
+         x="246.76344"
+         y="153.92165" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:17.6389px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-1.7311654"
+       y="166.78047"
+       id="text10548-9"><tspan
+         sodipodi:role="line"
+         id="tspan10546-2"
+         x="-1.7311654"
+         y="166.78047"
+         style="font-size:17.6389px;stroke-width:0.264583">B</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:17.6389px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="242.79486"
+       y="167.01302"
+       id="text10548-9-5"><tspan
+         sodipodi:role="line"
+         id="tspan10546-2-4"
+         x="242.79486"
+         y="167.01302"
+         style="font-size:17.6389px;stroke-width:0.264583">C</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1289)"
+       d="m 137.46879,112.58402 h 22.84199"
+       id="path1125"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#g9530"
+       inkscape:connection-end="#g9936" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1195)"
+       d="M 276.51697,99.000298 333.21823,79.428265"
+       id="path1127"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#g9936"
+       inkscape:connection-end="#rect1558-3-2-5" />
+  </g>
+</svg>

@@ -1,0 +1,99 @@
+---
+title: "Build EDA Figures"
+author: "Matthew Berginski"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidymodels)
+library(tidyverse)
+library(yardstick)
+library(tictoc)
+library(here)
+library(patchwork)
+library(gt)
+library(ggpubr)
+library(MESS)
+library(gridExtra)
+library(vip)
+
+library(BerginskiRMisc)
+
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+# Read In Combined Klaeger/Synergy Data and Organize
+
+This chunk of code reads in the pre-processed Klaeger/Synergy data.
+
+```{r}
+klaeger_data_matches_full = read_rds(here('results/klaeger_synergy_for_regression.rds'))
+```
+
+```{r data organization by viability}
+drug_viability_rank = klaeger_data_matches_full %>%
+	group_by(drug) %>%
+	summarise(mean_viability = mean(viability)) %>%
+	arrange(desc(mean_viability))
+
+cell_line_viability_rank = klaeger_data_matches_full %>%
+	group_by(cell_line) %>%
+	summarise(mean_viability = mean(viability)) %>%
+	arrange(desc(mean_viability))
+
+klaeger_data_matches_full = klaeger_data_matches_full %>%
+	mutate(drug = fct_relevel(as.factor(drug), drug_viability_rank$drug),
+				 cell_line = fct_relevel(as.factor(cell_line), cell_line_viability_rank$cell_line))
+
+```
+
+# Exploritory Data Analysis
+
+## Cell Viability Visualizations
+
+```{r distribution of viability}
+ggplot(klaeger_data_matches_full, aes(x = viability)) + 
+	geom_histogram() +
+	labs(x="Cell Viability", y="Number of Drug/Cell Line Combos") +
+	theme_berginski()
+```
+
+```{r}
+library(ggridges)
+ggplot(klaeger_data_matches_full, aes(x=viability,y=cell_line)) +
+	geom_density_ridges() +
+	# scale_x_continuous(expand = c(0, 0)) +
+	scale_y_discrete(expand = expand_scale(mult = c(0.01, .7))) +
+	labs(x="Cell Viability",y='Cell Line') +
+	# theme_ridges() +
+	theme_berginski()
+
+ggsave(here('figures/EDA_plots/cell_line_viability_plots.png'),height = 6.5, width = 4)
+trimImage(here('figures/EDA_plots/cell_line_viability_plots.png'))
+```
+
+```{r}
+library(ggridges)
+ggplot(klaeger_data_matches_full, aes(x=viability,y=drug)) +
+	geom_density_ridges() +
+	labs(x="Cell Viability",y='Compound') +
+	# scale_y_discrete(expand = expand_scale(mult = c(0.01, .7))) +
+	theme_berginski()
+
+ggsave(here('figures/EDA_plots/compound_viability_plots.png'),height = 6.5)
+trimImage(here('figures/EDA_plots/compound_viability_plots.png'))
+```
+
+```{r}
+treatment_variability = klaeger_data_matches_full %>% 
+	group_by(cell_line,drug,concentration_M) %>% 
+	summarise(viability_sd = sd(viability),
+						viability_mean = mean(viability)) %>% 
+	arrange(desc(viability_sd))
+
+ggplot(treatment_variability, aes(x=viability_sd,y=cell_line)) +
+	geom_density_ridges() +
+	labs(x="Standard Deviation in Cell Viability By Treatment",y='') +
+	theme_berginski()
+```

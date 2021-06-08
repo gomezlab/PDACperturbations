@@ -1,7 +1,7 @@
 Build Klaeger PDAC Synergy Model - Random Forest
 ================
 Matthew Berginski
-2021-04-14
+2021-04-23
 
 # Read In and Combine Klaeger/Synergy Data
 
@@ -30,23 +30,46 @@ cross validation stratifications:
     are \~8 repeats of the same experiment in the data, but I’ve
     included anyway for the sake of comparison)
 
-## Random Forest - Below 90 Predictions - Leave One Compound Out
+## Leave One Compound Out Null
+
+Just a quick version of the model where we exclude a single compound and
+then guess that the viability of the missing compound is simply the
+average of all the viability binary values.
 
 ![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+## Random Forest - Below 90 Predictions - Leave One Compound Out
+
+### 1000 Trees
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+\#\# 1000 Trees, 10 Mtry
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+### 5000 Trees
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+### 5000 Trees, mtry 10
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+### 20000 Trees
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+### 50000 Trees
+
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ## Random Forest - Below 90 Predictions - Leave One Compound/Concentration Out
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 ## Random Forest - Below 90 Predictions - Leave One Measurement Out
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 ## Random Forest - Below 90 Models - Variable Importance Models/Plots
 
@@ -57,16 +80,7 @@ binary_90_models[["CAF"]] %>%
     vip(num_features = 30)
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
-
-``` r
-binary_90_models[["NAF"]] %>% 
-    pluck(".workflow", 1) %>%
-    pull_workflow_fit() %>%
-    vip(num_features = 30)
-```
-
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 binary_90_models[["P1004"]] %>% 
@@ -75,7 +89,7 @@ binary_90_models[["P1004"]] %>%
     vip(num_features = 30)
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 binary_90_models[["P1304"]] %>% 
@@ -84,7 +98,7 @@ binary_90_models[["P1304"]] %>%
     vip(num_features = 30)
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Compound Out
 
@@ -93,16 +107,12 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
     mutate(viability_binary = as.factor(viability < 40))
 ```
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
-
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Compound/Concentration Out
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 ## Random Forest - Below 40 Predictions - Leave One Measurement Out
 
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
-
-![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](build_klaeger_synergy_binary_model_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->

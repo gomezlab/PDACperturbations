@@ -1,0 +1,300 @@
+---
+title: "Assess Klaeger/Synergy Models"
+author: "Matthew Berginski"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(tidymodels)
+library(ROCR)
+library(patchwork)
+library(gt)
+
+knitr::opts_knit$set(root.dir = here())
+```
+
+# Convenience Functions
+
+```{r}
+process_full_roc_data <- function(all_results, cell_line) {
+	
+	roc_vals = data.frame()
+	for (model_id in unique(all_results$.config)) {
+		these_results = all_results %>% filter(.config == model_id)
+		pred <- prediction(these_results$.pred_TRUE,these_results$viability_90)
+		perf_roc <- performance(pred, measure = "auc")
+		prc_roc <- performance(pred, measure = "aucpr")
+		
+		roc_vals = bind_rows(
+			roc_vals,
+			data.frame(model_id = model_id,roc = perf_roc@y.values[[1]],prc = prc_roc@y.values[[1]] )
+		)
+	}
+	roc_vals = roc_vals %>%
+		mutate(roc_rank = dense_rank(desc(roc)),
+					 prc_rank = dense_rank(desc(prc))) %>%
+		rename_with(~paste0(.x,"_",cell_line), .cols=!model_id)
+}
+
+get_ROC_curve_values <- function(results, cell_line) {
+	pred <- prediction(results$.pred_TRUE,results$viability_90)
+	perf <- performance(pred,measure = "tpr",x.measure = "fpr")
+	return(data.frame(fpr = perf@x.values[[1]],
+										tpr = perf@y.values[[1]],
+										cell_line = cell_line))
+}
+
+get_PRC_curve_values <- function(results, cell_line) {
+	pred <- prediction(results$.pred_TRUE,results$viability_90)
+	perf <- performance(pred,measure = "prec",x.measure = "rec")
+	return(data.frame(precision = perf@y.values[[1]],
+										recall = perf@x.values[[1]],
+										cell_line = cell_line))
+}
+```
+
+# XGBoost Model Assessment
+
+```{r}
+xgb_res_CAF = read_rds(here('results/xgboost_below90_models/CAF.rds'))
+xgb_res_P1004 = read_rds(here('results/xgboost_below90_models/P1004.rds'))
+xgb_res_P1304 = read_rds(here('results/xgboost_below90_models/P1304.rds'))
+
+xgboost_results = process_full_roc_data(xgb_res_CAF %>% collect_predictions(), "CAF") %>%
+	left_join(process_full_roc_data(xgb_res_P1004 %>% collect_predictions(), "P1004")) %>%
+	left_join(process_full_roc_data(xgb_res_P1304 %>% collect_predictions(), "P1304")) %>%
+	mutate(average_ROC = (roc_CAF + roc_P1004 + roc_P1304)/3,
+				 average_PRC = (prc_CAF + prc_P1004 + prc_P1304)/3) %>%
+	arrange(desc(average_ROC)) %>%
+	left_join(xgb_res_CAF %>% 
+							collect_metrics() %>% 
+							filter(.metric == "roc_auc") %>%
+							select(mtry,trees,tree_depth,learn_rate,loss_reduction,sample_size,.config),
+						by = c('model_id' = '.config'))
+
+best_ROC_vals_xgboost = bind_rows(
+	xgb_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_ROC_curve_values("CAF"),
+	xgb_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_ROC_curve_values("P1004"),
+	xgb_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_ROC_curve_values("P1304"),
+) %>% mutate(model_type = "XGBoost")
+
+best_PRC_vals_xgboost = bind_rows(
+	xgb_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_PRC_curve_values("CAF"),
+	xgb_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_PRC_curve_values("P1004"),
+	xgb_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == xgboost_results$model_id[1]) %>%
+		get_PRC_curve_values("P1304"),
+) %>% mutate(model_type = "XGBoost")
+```
+
+# Rand Forest Model Assessment
+
+```{r}
+rand_forest_res_CAF = read_rds(here('results/rand_forest_below90_models/CAF.rds'))
+rand_forest_res_P1004 = read_rds(here('results/rand_forest_below90_models/P1004.rds'))
+rand_forest_res_P1304 = read_rds(here('results/rand_forest_below90_models/P1304.rds'))
+
+rand_forest_results = process_full_roc_data(rand_forest_res_CAF %>% collect_predictions(), "CAF") %>%
+	left_join(process_full_roc_data(rand_forest_res_P1004 %>% collect_predictions(), "P1004")) %>%
+	left_join(process_full_roc_data(rand_forest_res_P1304 %>% collect_predictions(), "P1304")) %>%
+	mutate(average_ROC = (roc_CAF + roc_P1004 + roc_P1304)/3,
+				 average_PRC = (prc_CAF + prc_P1004 + prc_P1304)/3) %>%
+	arrange(desc(average_ROC))
+
+#Output best Rand Forest Model config
+rand_forest_res_CAF %>% 
+	collect_metrics() %>% 
+	filter(.config == rand_forest_results$model_id[1]) %>% 
+	write_rds(here('results/best_model_configs/rand_forest.rds'))
+
+best_ROC_vals_rand_forest = bind_rows(
+	rand_forest_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_ROC_curve_values("CAF"),
+	rand_forest_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_ROC_curve_values("P1004"),
+	rand_forest_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_ROC_curve_values("P1304"),
+) %>% mutate(model_type = "Random Forest")
+
+best_PRC_vals_rand_forest = bind_rows(
+	rand_forest_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_PRC_curve_values("CAF"),
+	rand_forest_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_PRC_curve_values("P1004"),
+	rand_forest_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == rand_forest_results$model_id[1]) %>%
+		get_PRC_curve_values("P1304"),
+) %>% mutate(model_type = "Random Forest")
+```
+
+# SVM Model Assessment
+
+```{r}
+svm_res_CAF = read_rds(here('results/svm_below90_models/CAF.rds'))
+svm_res_P1004 = read_rds(here('results/svm_below90_models/P1004.rds'))
+svm_res_P1304 = read_rds(here('results/svm_below90_models/P1304.rds'))
+
+svm_results = process_full_roc_data(svm_res_CAF %>% collect_predictions(), "CAF") %>%
+	left_join(process_full_roc_data(svm_res_P1004 %>% collect_predictions(), "P1004")) %>%
+	left_join(process_full_roc_data(svm_res_P1304 %>% collect_predictions(), "P1304")) %>%
+	mutate(average_ROC = (roc_CAF + roc_P1004 + roc_P1304)/3,
+				 average_PRC = (prc_CAF + prc_P1004 + prc_P1304)/3) %>%
+	arrange(desc(average_ROC))
+
+best_ROC_vals_svm = bind_rows(
+	svm_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_ROC_curve_values("CAF"),
+	svm_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_ROC_curve_values("P1004"),
+	svm_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_ROC_curve_values("P1304"),
+) %>% mutate(model_type = "SVM")
+
+best_PRC_vals_svm = bind_rows(
+	svm_res_CAF %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_PRC_curve_values("CAF"),
+	svm_res_P1004 %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_PRC_curve_values("P1004"),
+	svm_res_P1304 %>% 
+		collect_predictions() %>% 
+		filter(.config == svm_results$model_id[1]) %>%
+		get_PRC_curve_values("P1304"),
+) %>% mutate(model_type = "SVM")
+```
+
+# Model Assessment/Visualization
+
+```{r}
+all_ROC_vals = bind_rows(
+	best_ROC_vals_xgboost,
+	best_ROC_vals_rand_forest,
+	best_ROC_vals_svm
+)
+
+all_PRC_vals = bind_rows(
+	best_PRC_vals_xgboost,
+	best_PRC_vals_rand_forest,
+	best_PRC_vals_svm
+)
+
+# ROC_data = tribble(
+# 	~"Cell Line",~"Model Type",~"AUROC",
+# 	"CAF","XGBoost",xgboost_results$roc_CAF[1],
+# 	"CAF","Rand Forest",rand_forest_results$roc_CAF[1],
+# 	"CAF","SVM",svm_results$roc_CAF[1],
+# 	"P1004","XGBoost",xgboost_results$roc_P1004[1],
+# 	"P1004","Rand Forest",rand_forest_results$roc_P1004[1],
+# 	"P1004","SVM",svm_results$roc_P1004[1],
+# 	"P1304","XGBoost",xgboost_results$roc_P1304[1],
+# 	"P1304","Rand Forest",rand_forest_results$roc_P1304[1],
+# 	"P1304","SVM",svm_results$roc_P1304[1],	
+# ) %>% mutate(AUROC = signif(AUROC,3))
+# # gtsave(here('figures/model_assessment/ROC_table.png'))
+# 
+# PRC_data = tribble(
+# 	~"Cell Line",~"Model Type",~"AUPRC",
+# 	"CAF","XGBoost",xgboost_results$prc_CAF[1],
+# 	"CAF","Rand Forest",rand_forest_results$prc_CAF[1],
+# 	"CAF","SVM",svm_results$prc_CAF[1],
+# 	"P1004","XGBoost",xgboost_results$prc_P1004[1],
+# 	"P1004","Rand Forest",rand_forest_results$prc_P1004[1],
+# 	"P1004","SVM",svm_results$prc_P1004[1],
+# 	"P1304","XGBoost",xgboost_results$prc_P1304[1],
+# 	"P1304","Rand Forest",rand_forest_results$prc_P1304[1],
+# 	"P1304","SVM",svm_results$prc_P1304[1],	
+# ) %>% mutate(AUPRC = signif(AUPRC,3))
+# 
+# ROC_data %>% left_join(PRC_data) %>%
+# 	gt() %>%
+# 	gtsave(here('figures/model_assessment/results_table.png'))
+# BerginskiRMisc::trimImage(here('figures/model_assessment/results_table.png'))
+
+ROC_text = tribble(
+	~cell_line,~text,
+	"CAF",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$roc_CAF[1]), "\n", 
+							 "XGBoost: ",sprintf("%.3f",xgboost_results$roc_CAF[1]), "\n", 
+							 "SVM: ",sprintf("%.3f",svm_results$roc_CAF[1])),
+	"P1004",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$roc_P1004[1]), "\n", 
+								 "XGBoost: ",sprintf("%.3f",xgboost_results$roc_P1004[1]), "\n", 
+								 "SVM: ",sprintf("%.3f",svm_results$roc_P1004[1])),
+	"P1304",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$roc_P1304[1]), "\n", 
+								 "XGBoost: ",sprintf("%.3f",xgboost_results$roc_P1304[1]), "\n", 
+								 "SVM: ",sprintf("%.3f",svm_results$roc_P1304[1])),
+)
+
+ROC_plots = ggplot(all_ROC_vals, aes(x=fpr, y=tpr,color=model_type)) + 
+	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
+	geom_line(alpha=0.75) + 
+	geom_text(mapping=aes(x=1,y=0,label=text),data=ROC_text,color='black',vjust="inward",hjust="inward") +
+	# geom_segment(x=0,y=0,xend=1,yend=1) +
+	xlim(c(0,1)) + ylim(c(0,1)) +
+	labs(x="False Positive Rate",y="True Positive Rate",color="Model Type") +
+	BerginskiRMisc::theme_berginski() +
+	facet_wrap(~cell_line)
+
+PRC_text = tribble(
+	~cell_line,~text,
+	"CAF",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$prc_CAF[1]), "\n", 
+							 "XGBoost: ",sprintf("%.3f",xgboost_results$prc_CAF[1]), "\n", 
+							 "SVM: ",sprintf("%.3f",svm_results$prc_CAF[1])),
+	"P1004",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$prc_P1004[1]), "\n", 
+								 "XGBoost: ",sprintf("%.3f",xgboost_results$prc_P1004[1]), "\n", 
+								 "SVM: ",sprintf("%.3f",svm_results$prc_P1004[1])),
+	"P1304",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$prc_P1304[1]), "\n", 
+								 "XGBoost: ",sprintf("%.3f",xgboost_results$prc_P1304[1]), "\n", 
+								 "SVM: ",sprintf("%.3f",svm_results$prc_P1304[1])),
+)
+
+PRC_plots = ggplot(all_PRC_vals, aes(x=recall, y=precision,color=model_type)) + 
+	geom_line(alpha = 0.75) + 
+	geom_text(mapping=aes(x=1,y=1,label=text),data=PRC_text,color='black',vjust="inward",hjust="inward") +
+	# geom_segment(x=0,y=0,xend=1,yend=1) +
+	# xlim(c(0,1)) + ylim(c(0,1)) +
+	labs(x="Recall",y="Precision",color="Model Type") +
+	BerginskiRMisc::theme_berginski() +
+	facet_wrap(~cell_line)
+
+model_assess_plots = ROC_plots / PRC_plots
+ggsave(here('figures/model_assessment/roc_prc.png'), width=6*1.5,height=4*1.5)
+BerginskiRMisc::trimImage(here('figures/model_assessment/roc_prc.png'))
+```

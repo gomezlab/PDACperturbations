@@ -1,7 +1,7 @@
 Klaeger Synergy Viability Predictions
 ================
 Matthew Berginski
-2021-05-05
+2021-05-11
 
 # Read In and Combine Klaeger/Synergy Data
 
@@ -94,16 +94,16 @@ I’ve done is:
 
 ## Compounds with Low Predicted Effect
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/low%20effect%20below%2090-1.png)<!-- -->
 
 ## Compounds with High Predicted Effect
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/high%20effect%20below%2090-1.png)<!-- -->
 
 ## Compounds with High Predicted Differences Across Concentrations
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/concentration%20diff%20below%2090-1.png)<!-- -->
 
 ## Compounds with High Predicted Differences Between Cell Lines
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/cell%20line%20diff%20below%2090-1.png)<!-- -->

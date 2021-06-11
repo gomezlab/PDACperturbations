@@ -318,10 +318,10 @@ build_probablity_plots <- function(data_set) {
 
 ## Compounds with Low Predicted Effect
 
-```{r, echo = F, fig.width = 8, fig.height = 8}
+```{r low effect below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_lowest_effect = below_90_diffs %>%
 	arrange(mean_prob) %>%
-	slice(1:10)
+	dplyr::slice(1:10)
 
 below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,ten_lowest_effect$drug)) %>%
@@ -331,10 +331,10 @@ below_90_predictions %>%
 
 ## Compounds with High Predicted Effect
 
-```{r, echo = F, fig.width = 8, fig.height = 8}
+```{r high effect below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_highest_effect = below_90_diffs %>%
 	arrange(desc(mean_prob)) %>%
-	slice(1:10)
+	dplyr::slice(1:10)
 
 below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,ten_highest_effect$drug)) %>%
@@ -344,10 +344,10 @@ below_90_predictions %>%
 
 ## Compounds with High Predicted Differences Across Concentrations
 
-```{r, echo = F, fig.width = 8, fig.height = 8}
+```{r concentration diff below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_highest_diff = below_90_diffs %>%
 	arrange(desc(prob_diff)) %>%
-	slice(1:10)
+	dplyr::slice(1:10)
 
 below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,ten_highest_diff$drug)) %>%
@@ -357,10 +357,10 @@ below_90_predictions %>%
 
 ## Compounds with High Predicted Differences Between Cell Lines
 
-```{r, echo = F, fig.width = 8, fig.height = 8}
+```{r cell line diff below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_highest_cell_diff = cell_line_diffs %>%
 	arrange(desc(cell_line_diffs$aver_diff)) %>%
-	slice(1:10)
+	dplyr::slice(1:10)
 
 below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,ten_highest_cell_diff$drug)) %>%

@@ -79,7 +79,7 @@ if (! file.exists(here('results/xgboost_below90_models/P1004.rds'))) {
 	) %>% write_rds(here('results/xgboost_below90_models/P1004.rds'), compress = 'gz')
 }
 
-if (! file.exists(here('results/xgboost_below90_models/P1004.rds'))) {
+if (! file.exists(here('results/xgboost_below90_models/P1304.rds'))) {
 	xgb_res_P1304 <- tune_grid(
 		xgb_wf,
 		resamples = cell_line_compound_splits$P1304,

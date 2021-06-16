@@ -1,5 +1,5 @@
 ---
-title: "Process Synergy"
+title: "Process YehLabHTS Data for ML"
 author: "Matthew Berginski"
 date: "`r Sys.Date()`"
 output: github_document
@@ -26,7 +26,7 @@ synergy = read_rds(here('data/normalized_data.rds')) %>%
 	filter(cell_line != "P140710N1") %>%
 	rename(dose_anchor_m = anchor_dose,
 				 dose_compound_m = dose, 
-				 viability = inhibition) %>% 
+				 viability = normalized) %>% 
 	mutate(cell_line = case_when(
 		cell_line == "P100422" ~ "P1004",
 		cell_line == "P130411" ~ "P1304",

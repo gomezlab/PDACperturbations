@@ -1,7 +1,7 @@
 Klaeger Synergy Viability Binary Predictions
 ================
 Matthew Berginski
-2021-06-16
+2021-06-17
 
 # Read In and Combine Klaeger/Synergy Data
 
@@ -29,6 +29,57 @@ distribution of viability predictions.
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+CAF_importance = binary_90_models$CAF %>% 
+    vip(num_features = 25)
+
+CAF_DK = CAF_importance$data$Variable[CAF_importance$data$Variable %in% dark_kinases$symbol]
+
+P1004_importance = binary_90_models$P1004 %>% 
+    vip(num_features = 25)
+
+P1004_DK = P1004_importance$data$Variable[P1004_importance$data$Variable %in% dark_kinases$symbol]
+
+P1304_importance = binary_90_models$P1304 %>% 
+    vip(num_features = 25)
+
+P1304_DK = P1304_importance$data$Variable[P1304_importance$data$Variable %in% dark_kinases$symbol]
+
+
+CAF_plot_data = as.data.frame(CAF_importance$data) %>% 
+    mutate(Variable = fct_relevel(as.factor(Variable), rev(Variable)),
+                 cell_line = "CAF")
+P1004_plot_data = as.data.frame(P1004_importance$data) %>% 
+    mutate(Variable = ifelse(Variable == "CSNK2A1;CSNK2A3","CSNK2A(1|3)",Variable)) %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), rev(Variable)),
+                 cell_line = "P1004")
+
+P1304_plot_data = as.data.frame(P1304_importance$data) %>% 
+    mutate(Variable = fct_relevel(as.factor(Variable), rev(Variable)),
+                 cell_line = "P1304")
+```
+
+``` r
+CAF_plot = ggplot(CAF_plot_data, aes(y=Variable,x=Importance)) + 
+    geom_col() +
+    labs(x="Importance",y="Kinase Target",title = 'CAF Model') +
+    BerginskiRMisc::theme_berginski()
+
+P1004_plot = ggplot(P1004_plot_data, aes(y=Variable,x=Importance)) + 
+    geom_col() +
+    labs(x="Importance",y='',title = 'P1004 Model') +
+    BerginskiRMisc::theme_berginski()
+
+P1304_plot = ggplot(P1304_plot_data, aes(y=Variable,x=Importance)) + 
+    geom_col() +
+    labs(x="Importance",y='',title = 'P1304 Model') +
+    BerginskiRMisc::theme_berginski()
+
+full_importance_plot = CAF_plot + P1004_plot + P1304_plot
+ggsave(here('figures/prediction_results/VIP_plot.png'),width=9,height=3.75)
+BerginskiRMisc::trimImage(here('figures/prediction_results/VIP_plot.png'))
+```
 
 # Looking for Compounds to Test - Below 90 Predictions
 

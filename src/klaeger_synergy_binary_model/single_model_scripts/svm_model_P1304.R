@@ -31,12 +31,10 @@ svm_wf <- workflow() %>%
 	add_model(svm_spec)
 
 tic()
-if (! file.exists(here('results/svm_below90_models/P1304.rds'))) {
-	svm_res_CAF <- tune_grid(
-		svm_wf,
-		resamples = cell_line_compound_splits$P1304,
-		grid = svm_grid,
-		control = control_grid(save_pred = TRUE)
-	) %>% write_rds(here('results/svm_below90_models/P1304.rds'), compress = 'gz')
-}
+svm_res_CAF <- tune_grid(
+	svm_wf,
+	resamples = cell_line_compound_splits$P1304,
+	grid = svm_grid,
+	control = control_grid(save_pred = TRUE)
+) %>% write_rds(here('results/svm_below90_models/P1304.rds'), compress = 'gz')
 toc()

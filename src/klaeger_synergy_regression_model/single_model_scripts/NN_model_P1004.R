@@ -22,7 +22,7 @@ nn_grid = grid_latin_hypercube(
 	epochs(),
 	hidden_units(),
 	dropout(),
-	size = 1
+	size = 100
 )
 
 nnet_wf <- workflow() %>%

@@ -8,8 +8,6 @@ library(doParallel)
 
 tic()
 
-doParallel::registerDoParallel(cores=detectCores() - 2)
-
 cell_line_compound_splits = read_rds(here('results/klaeger_synergy_classification_90_CV_split.rds'))
 
 nn_spec = mlp(
@@ -22,7 +20,7 @@ nn_spec = mlp(
 nn_grid = grid_latin_hypercube(
 	epochs(),
 	hidden_units(),
-	dropout(),
+	dropout(c(0,0.25)),
 	size = 100
 )
 

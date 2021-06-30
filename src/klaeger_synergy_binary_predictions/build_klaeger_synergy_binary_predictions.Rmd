@@ -15,6 +15,7 @@ library(patchwork)
 library(ggpubr)
 library(vip)
 library(DarkKinaseTools)
+library(ggupset)
 # library(MESS)
 # library(gridExtra)
 
@@ -39,26 +40,32 @@ best_model_configs = read_rds(here('results/best_model_configs/rand_forest.rds')
 
 ```{r, cache = T, include = F}
 tic()
-
-binary_90_models = list()
-
-prediction_results = c()
-for (this_cell_line in unique(klaeger_synergy_model_data$cell_line)) {
+if (!file.exists(here('results/klaeger_below_90_model_set.rds'))) {
+	binary_90_models = list()
 	
-	klaeger_data_cell_line = klaeger_synergy_model_data %>%
-		filter(cell_line == this_cell_line) %>%
-		select(-drug,-concentration_M,-cell_line) 
+	for (this_cell_line in unique(klaeger_synergy_model_data$cell_line)) {
+		
+		klaeger_data_cell_line = klaeger_synergy_model_data %>%
+			filter(cell_line == this_cell_line) %>%
+			select(-drug,-concentration_M,-cell_line) 
+		
+		rand_forest_model <- rand_forest(
+			trees = best_model_configs[[this_cell_line]]$trees[1],
+			mtry = best_model_configs[[this_cell_line]]$mtry[1],
+			min_n = best_model_configs[[this_cell_line]]$min_n[1]
+		) %>% set_engine("ranger", num.threads = parallel::detectCores() - 2,importance = "impurity") %>%
+			set_mode("classification")
+		
+		binary_90_models[[this_cell_line]] <- rand_forest_model %>%
+			fit(viability_90 ~ ., data = klaeger_data_cell_line)
+	}
 	
-	rand_forest_model <- rand_forest(
-		trees = best_model_configs[[this_cell_line]]$trees[1],
-		mtry = best_model_configs[[this_cell_line]]$mtry[1],
-		min_n = best_model_configs[[this_cell_line]]$min_n[1]
-	) %>% set_engine("ranger", num.threads = parallel::detectCores() - 2,importance = "impurity") %>%
-		set_mode("classification")
-	
-	binary_90_models[[this_cell_line]] <- rand_forest_model %>%
-		fit(viability_90 ~ ., data = klaeger_data_cell_line)
+	write_rds(binary_90_models,here('results/klaeger_below_90_model_set.rds'), compress='gz')
+} else {
+	binary_90_models = read_rds(here('results/klaeger_below_90_model_set.rds'))
 }
+
+
 toc()
 ```
 
@@ -69,22 +76,28 @@ Now to use the models to make predictions on the remainder of the compounds in t
 ## Below 90% Cell Viability
 
 ```{r, include = F}
-below_90_predictions = data.frame()
-
-klaeger_prediction_wide_model_set = klaeger_for_prediction %>%
-	select(-drug,-concentration_M)
-
-for (this_cell_line in names(binary_90_models)) {
-	this_cell_predictions = data.frame(
-		drug = klaeger_for_prediction$drug,
-		concentration_M = klaeger_for_prediction$concentration_M,
-		cell_line = this_cell_line,
-		prob_below_90 = predict(binary_90_models[[this_cell_line]],klaeger_prediction_wide_model_set, type="prob")$.pred_TRUE)
+if (! file.exists(here('results/klaeger_below90_model_predictions.rds'))) {
+	below_90_predictions = data.frame()
 	
-	below_90_predictions = bind_rows(
-		below_90_predictions,
-		this_cell_predictions
-	)
+	klaeger_prediction_wide_model_set = klaeger_for_prediction %>%
+		select(-drug,-concentration_M)
+	
+	for (this_cell_line in names(binary_90_models)) {
+		this_cell_predictions = data.frame(
+			drug = klaeger_for_prediction$drug,
+			concentration_M = klaeger_for_prediction$concentration_M,
+			cell_line = this_cell_line,
+			prob_below_90 = predict(binary_90_models[[this_cell_line]],klaeger_prediction_wide_model_set, type="prob")$.pred_TRUE)
+		
+		below_90_predictions = bind_rows(
+			below_90_predictions,
+			this_cell_predictions
+		)
+	}
+	
+	write_rds(below_90_predictions,here('results/klaeger_below90_model_predictions.rds'), compress='gz')
+} else {
+	below_90_predictions = read_rds(here('results/klaeger_below90_model_predictions.rds'))
 }
 ```
 
@@ -96,11 +109,22 @@ ggplot(below_90_predictions, aes(x=prob_below_90)) +
 ```
 
 ```{r, echo = F}
+cell_line_average = below_90_predictions %>% 
+	group_by(cell_line) %>% 
+	summarise(mean_via = mean(prob_below_90),
+						low_conf = tidy(t.test(prob_below_90))$conf.low,
+						high_conf = tidy(t.test(prob_below_90))$conf.high) %>%
+	mutate(via_text = paste0("Mean Prob:",signif(mean_via,3),"\n95% Conf: (",signif(low_conf,3),"-", signif(high_conf,3), ")"))
+
+
 ggplot(below_90_predictions, aes(x=prob_below_90)) + 
 	geom_histogram(breaks = seq(0,1,by=0.05)) + 
-	labs(x="Predicted Probability Below 90%", y = "Number of Drug/Concentration Combinations") +
+	labs(x="Predicted Probability Below 90%", y = "# of Drug/Concentration\nCombinations") +
+	# geom_text(data = cell_line_average, mapping = aes(label = via_text,x=Inf,y=Inf), hjust=1,vjust=1,size=3) +
 	BerginskiRMisc::theme_berginski() +
 	facet_wrap(~cell_line)
+ggsave(here('figures/prediction_results/probability_dist.png'),height=2.5,width=7.1,dpi = 300)
+BerginskiRMisc::trimImage(here('figures/prediction_results/probability_dist.png'))
 ```
 
 ```{r}
@@ -118,7 +142,6 @@ P1304_importance = binary_90_models$P1304 %>%
 	vip(num_features = 25)
 
 P1304_DK = P1304_importance$data$Variable[P1304_importance$data$Variable %in% dark_kinases$symbol]
-
 
 CAF_plot_data = as.data.frame(CAF_importance$data) %>% 
 	mutate(Variable = fct_relevel(as.factor(Variable), rev(Variable)),
@@ -146,12 +169,31 @@ P1004_plot = ggplot(P1004_plot_data, aes(y=Variable,x=Importance)) +
 
 P1304_plot = ggplot(P1304_plot_data, aes(y=Variable,x=Importance)) + 
 	geom_col() +
-	labs(x="Importance",y='',title = 'P1304 Model') +
+	labs(x="Importance",y="",title = 'P1304 Model') +
 	BerginskiRMisc::theme_berginski()
+
+VIP_upset = bind_rows(CAF_plot_data, P1004_plot_data, P1304_plot_data) %>%
+	group_by(Variable) %>%
+	summarise(cell_lines = list(cell_line)) %>%
+	ggplot(aes(x=cell_lines)) + 
+	geom_bar() + 
+	scale_x_upset() +
+	scale_y_continuous(breaks=seq(0,14,by=2)) +
+	BerginskiRMisc::theme_berginski() +
+	labs(x="Cell Lines",y="Number of Kinases")
 
 full_importance_plot = CAF_plot + P1004_plot + P1304_plot
 ggsave(here('figures/prediction_results/VIP_plot.png'),width=9,height=3.75)
 BerginskiRMisc::trimImage(here('figures/prediction_results/VIP_plot.png'))
+
+P1304_plot = ggplot(P1304_plot_data, aes(y=Variable,x=Importance)) + 
+	geom_col() +
+	labs(x="Importance",y="Kinase Target",title = 'P1304 Model') +
+	BerginskiRMisc::theme_berginski()
+
+VIP_with_upset = (CAF_plot + P1004_plot) / (P1304_plot + VIP_upset)
+ggsave(here('figures/prediction_results/VIP_with_upset.png'),height=7.5,width=9)
+BerginskiRMisc::trimImage(here('figures/prediction_results/VIP_with_upset.png'))
 ```
 
 # Looking for Compounds to Test - Below 90 Predictions
@@ -175,6 +217,18 @@ below_90_diffs = below_90_predictions %>%
 	group_by(drug) %>%
 	summarise(prob_diff = max(prob_below_90) - min(prob_below_90),
 						mean_prob = mean(prob_below_90))
+
+CAF_survival_max = below_90_predictions %>% 
+	select(drug,concentration_M,cell_line,prob_below_90) %>% 
+	pivot_wider(names_from = cell_line, values_from = prob_below_90) %>%
+	mutate(CAF_P1004_diff = CAF - P1004,
+				 CAF_P1304_diff = CAF - P1304) %>%
+	select(drug, contains("diff")) %>%
+	pivot_longer(-drug,names_to = "diff_type", values_to = "diff_value") %>%
+	group_by(drug) %>%
+	summarise(CAF_diff = mean(diff_value)) %>%
+	arrange(CAF_diff) %>%
+	identity()
 
 cell_line_diffs = below_90_predictions %>% 
 	select(drug,concentration_M,cell_line,prob_below_90) %>% 
@@ -203,7 +257,7 @@ below_90_predictions = below_90_predictions %>%
 ```
 
 ```{r, include = F}
-build_probablity_plots <- function(data_set) {
+build_probablity_plots <- function(data_set, nrow = NULL) {
 	ggplot(data_set,aes(x = log10(concentration_M),
 											y = prob_below_90, 
 											color = cell_line)) +
@@ -211,10 +265,11 @@ build_probablity_plots <- function(data_set) {
 		geom_line() +
 		ylim(c(0,1)) +
 		labs(x="Log 10 Compound Concentration (µM)", 
-				 y="Predicted Probability of Cell Viability Below 90%",
+				 y="Predicted Probability of\nViability Below 90%",
 				 color="Cell Line") +
 		BerginskiRMisc::theme_berginski() +
-		facet_wrap(~drug)
+		scale_color_brewer(type = "qual", palette = "Dark2") +
+		facet_wrap(~drug, nrow = nrow)
 }
 ```
 
@@ -224,7 +279,7 @@ below_90_predictions %>%
 	build_probablity_plots()
 ```
 
-## Compounds with Low Predicted Effect
+## CAF Survival Max
 
 ```{r low effect below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_lowest_effect = below_90_diffs %>%
@@ -236,6 +291,16 @@ below_90_predictions %>%
 	filter(drug %in% ten_lowest_effect$drug) %>%
 	build_probablity_plots()
 ```
+
+## Compounds with Low Predicted Effect
+
+```{r low effect below 90, echo = F, fig.width = 8, fig.height = 8}
+below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,CAF_survival_max$drug)) %>%
+	filter(drug %in% CAF_survival_max$drug[1:10]) %>%
+	build_probablity_plots()
+```
+
 
 ## Compounds with High Predicted Effect
 
@@ -274,4 +339,91 @@ below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,ten_highest_cell_diff$drug)) %>%
 	filter(drug %in% ten_highest_cell_diff$drug) %>%
 	build_probablity_plots()
+```
+
+
+
+```{r, include = F}
+#This chunk builds the figures for the paper
+
+fig_height = 2
+
+low_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_lowest_effect$drug)) %>%
+	filter(drug %in% ten_lowest_effect$drug[1:5]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/predicted_low.png'),low_predictions,height=fig_height)
+BerginskiRMisc::trimImage(here('figures/prediction_results/predicted_low.png'))
+
+high_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_effect$drug)) %>%
+	filter(drug %in% ten_highest_effect$drug[1:5]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/predicted_high.png'),high_predictions,height=fig_height)
+BerginskiRMisc::trimImage(here('figures/prediction_results/predicted_high.png'))
+
+diff_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_diff$drug)) %>%
+	filter(drug %in% ten_highest_diff$drug[1:5]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/high_diff.png'),diff_predictions,height=fig_height)
+BerginskiRMisc::trimImage(here('figures/prediction_results/high_diff.png'))
+
+cell_diff_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_cell_diff$drug)) %>%
+	filter(drug %in% ten_highest_cell_diff$drug[1:5]) %>%
+	build_probablity_plots(nrow = 1) + 
+	theme(legend.position="bottom") + theme(legend.position="bottom")
+ggsave(here('figures/prediction_results/high_cell_diff.png'),cell_diff_predictions,height=fig_height*1.275)
+BerginskiRMisc::trimImage(here('figures/prediction_results/high_cell_diff.png'))
+```
+
+```{r, include = F}
+#This chunk builds the figures for the paper
+
+fig_height = 2.25
+
+low_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_lowest_effect$drug)) %>%
+	filter(drug %in% ten_lowest_effect$drug[1:3]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/predicted_low_short.png'),low_predictions,height=fig_height,width=fig_height*2.25)
+BerginskiRMisc::trimImage(here('figures/prediction_results/predicted_low_short.png'))
+
+high_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_effect$drug)) %>%
+	filter(drug %in% ten_highest_effect$drug[1:3]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/predicted_high_short.png'),high_predictions,height=fig_height,width=fig_height*2.25)
+BerginskiRMisc::trimImage(here('figures/prediction_results/predicted_high_short.png'))
+
+diff_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_diff$drug)) %>%
+	filter(drug %in% ten_highest_diff$drug[1:3]) %>%
+	build_probablity_plots(nrow = 1) + theme(legend.position="none")
+ggsave(here('figures/prediction_results/high_diff_short.png'),diff_predictions,height=fig_height,width=fig_height*2.25)
+BerginskiRMisc::trimImage(here('figures/prediction_results/high_diff_short.png'))
+
+cell_diff_predictions = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_cell_diff$drug)) %>%
+	filter(drug %in% ten_highest_cell_diff$drug[1:3]) %>%
+	build_probablity_plots(nrow = 1) + 
+	theme(legend.position="bottom") + theme(legend.position="none")
+ggsave(here('figures/prediction_results/high_cell_diff_short.png'),cell_diff_predictions,height=fig_height,width=fig_height*2.25)
+BerginskiRMisc::trimImage(here('figures/prediction_results/high_cell_diff_short.png'))
+
+
+legend_plot = below_90_predictions %>%
+	mutate(drug = fct_relevel(drug,ten_highest_cell_diff$drug)) %>%
+	filter(drug %in% ten_highest_cell_diff$drug[1:3]) %>%
+	build_probablity_plots(nrow = 1) + 
+	theme(legend.position="bottom") + theme(legend.position="bottom")
+
+# Extract the legend. Returns a gtable
+leg <- get_legend(legend_plot)
+
+# Convert to a ggplot and print
+ggsave(here('figures/prediction_results/only_horiz_legend.png'),as_ggplot(leg),dpi=300)
+BerginskiRMisc::trimImage(here('figures/prediction_results/only_horiz_legend.png'))
+
 ```

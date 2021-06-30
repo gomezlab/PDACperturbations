@@ -87,7 +87,7 @@ OK, now to deal with some of the crazy outliers in the data set. There are relat
 max_val = quantile(klaeger_full$relative_intensity, 0.9999, na.rm=T)
 klaeger_full = klaeger_full %>%
 	mutate(relative_intensity = ifelse(relative_intensity >= max_val, max_val, relative_intensity)) %>%
-	write_rds(here('results/klaeger_full_tidy.rds'))
+	write_rds(here('results/klaeger_full_tidy.rds'), compress = 'gz')
 ```
 
 # Exploritory Data Analysis

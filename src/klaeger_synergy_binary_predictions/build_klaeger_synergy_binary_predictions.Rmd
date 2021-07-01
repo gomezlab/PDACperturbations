@@ -264,7 +264,7 @@ build_probablity_plots <- function(data_set, nrow = NULL) {
 		geom_point() +
 		geom_line() +
 		ylim(c(0,1)) +
-		labs(x="Log 10 Compound Concentration (µM)", 
+		labs(x="Log 10 Compound Concentration (M)", 
 				 y="Predicted Probability of\nViability Below 90%",
 				 color="Cell Line") +
 		BerginskiRMisc::theme_berginski() +
@@ -275,11 +275,16 @@ build_probablity_plots <- function(data_set, nrow = NULL) {
 
 ```{r availability, echo = F, fig.width = 8, fig.height = 8, include = F}
 below_90_predictions %>%
-	filter(drug %in% c('Dacomitinib','JANEX-1','Varlitinib','AZD-8186','Pimasertib')) %>%
+	# filter(drug %in% c('Dacomitinib','JANEX-1','Varlitinib','AZD-8186','Pimasertib')) %>%
+	
+	filter(drug %in% c('AZD-8186')) %>%
+	
 	build_probablity_plots()
+
+
 ```
 
-## CAF Survival Max
+## Compounds with Low Predicted Effect
 
 ```{r low effect below 90, echo = F, fig.width = 8, fig.height = 8}
 ten_lowest_effect = below_90_diffs %>%
@@ -292,9 +297,10 @@ below_90_predictions %>%
 	build_probablity_plots()
 ```
 
-## Compounds with Low Predicted Effect
 
-```{r low effect below 90, echo = F, fig.width = 8, fig.height = 8}
+## CAF Survival Max
+
+```{r CAF survival max, echo = F, fig.width = 8, fig.height = 8}
 below_90_predictions %>%
 	mutate(drug = fct_relevel(drug,CAF_survival_max$drug)) %>%
 	filter(drug %in% CAF_survival_max$drug[1:10]) %>%

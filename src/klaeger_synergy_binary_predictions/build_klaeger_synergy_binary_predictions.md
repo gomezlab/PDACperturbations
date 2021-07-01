@@ -1,7 +1,7 @@
 Klaeger Synergy Viability Binary Predictions
 ================
 Matthew Berginski
-2021-06-17
+2021-06-30
 
 # Read In and Combine Klaeger/Synergy Data
 
@@ -46,7 +46,6 @@ P1304_importance = binary_90_models$P1304 %>%
 
 P1304_DK = P1304_importance$data$Variable[P1304_importance$data$Variable %in% dark_kinases$symbol]
 
-
 CAF_plot_data = as.data.frame(CAF_importance$data) %>% 
     mutate(Variable = fct_relevel(as.factor(Variable), rev(Variable)),
                  cell_line = "CAF")
@@ -73,12 +72,31 @@ P1004_plot = ggplot(P1004_plot_data, aes(y=Variable,x=Importance)) +
 
 P1304_plot = ggplot(P1304_plot_data, aes(y=Variable,x=Importance)) + 
     geom_col() +
-    labs(x="Importance",y='',title = 'P1304 Model') +
+    labs(x="Importance",y="",title = 'P1304 Model') +
     BerginskiRMisc::theme_berginski()
+
+VIP_upset = bind_rows(CAF_plot_data, P1004_plot_data, P1304_plot_data) %>%
+    group_by(Variable) %>%
+    summarise(cell_lines = list(cell_line)) %>%
+    ggplot(aes(x=cell_lines)) + 
+    geom_bar() + 
+    scale_x_upset() +
+    scale_y_continuous(breaks=seq(0,14,by=2)) +
+    BerginskiRMisc::theme_berginski() +
+    labs(x="Cell Lines",y="Number of Kinases")
 
 full_importance_plot = CAF_plot + P1004_plot + P1304_plot
 ggsave(here('figures/prediction_results/VIP_plot.png'),width=9,height=3.75)
 BerginskiRMisc::trimImage(here('figures/prediction_results/VIP_plot.png'))
+
+P1304_plot = ggplot(P1304_plot_data, aes(y=Variable,x=Importance)) + 
+    geom_col() +
+    labs(x="Importance",y="Kinase Target",title = 'P1304 Model') +
+    BerginskiRMisc::theme_berginski()
+
+VIP_with_upset = (CAF_plot + P1004_plot) / (P1304_plot + VIP_upset)
+ggsave(here('figures/prediction_results/VIP_with_upset.png'),height=7.5,width=9)
+BerginskiRMisc::trimImage(here('figures/prediction_results/VIP_with_upset.png'))
 ```
 
 # Looking for Compounds to Test - Below 90 Predictions
@@ -127,6 +145,10 @@ I’ve done is:
 ## Compounds with Low Predicted Effect
 
 ![](build_klaeger_synergy_binary_predictions_files/figure-gfm/low%20effect%20below%2090-1.png)<!-- -->
+
+## CAF Survival Max
+
+![](build_klaeger_synergy_binary_predictions_files/figure-gfm/CAF%20survival%20max-1.png)<!-- -->
 
 ## Compounds with High Predicted Effect
 

@@ -31,8 +31,6 @@ assertthat::assert_that(all(klaeger_compound_matches$drug %in% drug_matches$klae
 
 klaeger_wide = klaeger_compound_matches %>%
 	pivot_wider(names_from = "gene_name", values_from = "relative_intensity")
-
-
 ```
 
 The synergy data is processed in much the same way, toss out all the compounds not in the match list and prep the data for combining with Klaeger.

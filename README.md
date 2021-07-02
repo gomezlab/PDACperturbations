@@ -1,6 +1,6 @@
 # Predicting Pancreatic Cancer Cell Line Response to Kinase Inhibitors
 
-Data and code associated with kinase activation state and cell viabiltiy modeling. Most of the code consists of Rmarkdown documents, with the model testing code saved as R script files. The code is organized into several sequential categories:
+Data and code associated with kinase activation state and cell viabiltiy modeling. Most of the code consists of Rmarkdown documents, with the model testing code saved as R script files. The code requires several packages and is organized into sequential steps:
 
 ## Required Packages
 
@@ -10,7 +10,7 @@ I've written a [script](src/package_check.R) that checks for and installs all of
     * The helper script I use calls the "convert" command from imagemagick to trim whitespace around images, so imagemagick will need to be installed as well
   * [DarkKinaseTools](https://github.com/IDG-Kinase/DarkKinaseTools) for kinase lists
 
-The BerginskiRmisc package uses the convert command from Imagemagick to trim whitespace around images, if you don't have Imagemagick installed it should work with a failure message, but if Imagemagick if possible.
+The BerginskiRmisc package uses the convert command from Imagemagick to trim whitespace around images, if you don't have Imagemagick installed it should work with a failure message.
 
 ## Data Cleaning and Organization
 

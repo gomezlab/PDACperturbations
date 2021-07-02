@@ -3,7 +3,7 @@
 library(rmarkdown)
 library(here)
 
-render(here('src/process_synergy_data/process_synergy_YehLabHTS.Rmd'))
+render(here('src/process_screen_data/process_synergy_YehLabHTS.Rmd'))
 render(here('src/process_klaeger_data/klaeger_data_processing.Rmd'))
 render(here('src/process_synergy_klaeger_for_ML/process_for_ML.Rmd'))
 

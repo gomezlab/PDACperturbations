@@ -312,6 +312,7 @@ PRC_plots = ggplot(all_PRC_vals, aes(x=recall, y=precision,color=model_type)) +
 	facet_wrap(~cell_line)
 
 model_assess_plots = ROC_plots / PRC_plots
+dir.create(here('figures/model_assessment'), recursive = T, showWarnings = F)
 ggsave(here('figures/model_assessment/roc_prc.png'), width=6*1.4,height=4*1.4)
 BerginskiRMisc::trimImage(here('figures/model_assessment/roc_prc.png'))
 ```

@@ -145,6 +145,7 @@ ggplot(best_predictions, aes(x=viability, y=.pred)) +
 	labs(x = "Actual Cell Viability", y = "Predicted Viability", fill = "Density of\nPoints") +
 	BerginskiRMisc::theme_berginski() +
 	facet_grid(vars(model_type), vars(cell_line))
+dir.create(here('figures/model_assessment'), recursive = T, showWarnings = F)
 ggsave(here('figures/model_assessment/regression_models.png'))
 BerginskiRMisc::trimImage(here('figures/model_assessment/regression_models.png'))
 ```

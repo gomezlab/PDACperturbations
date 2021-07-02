@@ -69,6 +69,7 @@ ggplot(klaeger_data_matches_full, aes(x=viability,y=cell_line)) +
 	# theme_ridges() +
 	theme_berginski()
 
+dir.create(here('figures/EDA_plots'), recursive = T, showWarnings = F)
 ggsave(here('figures/EDA_plots/cell_line_viability_plots.png'),height = 6.5, width = 4)
 trimImage(here('figures/EDA_plots/cell_line_viability_plots.png'))
 ```

@@ -1,18 +1,16 @@
-# PDACperturbations
+# Predicting Pancreatic Cancer Cell Line Response to Kinase Inhibitors
 
 Data and code associated with kinase activation state and cell viabiltiy modeling. Most of the code consists of Rmarkdown documents, with the model testing code saved as R script files. The code is organized into several sequential categories:
 
 ## Required Packages
 
-Lots of packages needed: broom, doParallel, ggpubr, ggridges, ggupset, gridExtra, gt, here, janitor, MESS, patchwork, readxl, ROCR, tictoc, tidymodels, tidyverse, vip, yardstick, ranger, kernlab, xgboost
-
-I might also be missing a few...let me know if you notice a missed requirement.
-
-I also use a few custom packages:
+I've written a [script](src/package_check.R) that checks for and installs all of the packages required in the repository. I use the pacman package for this purpose and installing pacman if missing is covered in the script. There are also two github based packages:
 
   * [BerginskiRmisc](https://github.com/mbergins/BerginskiRMisc) for my custom theme and helper scripts
     * The helper script I use calls the "convert" command from imagemagick to trim whitespace around images, so imagemagick will need to be installed as well
   * [DarkKinaseTools](https://github.com/IDG-Kinase/DarkKinaseTools) for kinase lists
+
+The BerginskiRmisc package uses the convert command from Imagemagick to trim whitespace around images, if you don't have Imagemagick installed it should work with a failure message, but if Imagemagick if possible.
 
 ## Data Cleaning and Organization
 
@@ -42,3 +40,9 @@ The model testing code is saved single self contained scripts which fully implem
 ## Prediction Results
 
 Using the random forest model and associated code, predicting the rest of the Klaeger compounds is [here](src/klaeger_synergy_binary_predictions/build_klaeger_synergy_binary_predictions.md).
+
+## Reproducibility Script
+
+I've attempted to write a single [script](src/reproduce_results.R) that runs all the Rmarkdown files and scripts to completely reproduce the models and figures from the paper. I've only tested the code on Linux, but I see no reason why it wouldn't work on other platforms. Let me know if you attempt to run this script and it fails on your platform.
+
+This script takes a long time to run (XX hours on 64 core cluster node, XX hours on a Ryzen 7 5800x). This is mostly due to the hyperparameter scanning for the regression and binary models. 

@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 if("pacman" %in% rownames(installed.packages()) == FALSE) {
 	install.packages("pacman")
 }

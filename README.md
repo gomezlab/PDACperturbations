@@ -1,6 +1,6 @@
 # Predicting Pancreatic Cancer Cell Line Response to Kinase Inhibitors
 
-Data and code associated with kinase activation state and cell viabiltiy modeling. Most of the code consists of Rmarkdown documents, with the model testing code saved as R script files. The code is organized into several sequential categories:
+Data and code associated with kinase activation state and cell viabiltiy modeling. Most of the code consists of Rmarkdown documents, with the model testing code saved as R script files. The code requires several packages and is organized into sequential steps:
 
 ## Required Packages
 

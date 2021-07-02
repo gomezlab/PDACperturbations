@@ -37,7 +37,7 @@ With the compound/drug names matched, I preped the data sets for machine learnin
 
 ## Model Testing
 
-The model testing code is saved single self contained scripts which fully implement and run the hyperparameter scanning and model testing. The code is organized this way to make it simplier to run the modelling code on the UNC computing cluster. All of the regression testing models are available [here](src/klaeger_synergy_regression_model/single_model_scripts) and the binary above/below 90 are available [here](src/klaeger_synergy_binary_model/single_model_scripts). There are also scripts (search for run_all_models.R) that build out directory infrastructure and run all the models sequentially. 
+The model testing code is saved single self contained scripts which fully implement and run the hyperparameter scanning and model testing. The code is organized this way to make it simplier to run the modelling code on the UNC computing cluster, but should also be compatible with any computing environment. This code takes a long time to run. All of the regression testing models are available [here](src/klaeger_synergy_regression_model/single_model_scripts) and the binary above/below 90 are available [here](src/klaeger_synergy_binary_model/single_model_scripts). There are also scripts (search for run_all_models.R) that build out directory infrastructure and run all the models sequentially. 
 
 ## Prediction Results
 

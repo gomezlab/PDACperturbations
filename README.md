@@ -11,6 +11,7 @@ I might also be missing a few...let me know if you notice a missed requirement.
 I also use a few custom packages:
 
   * [BerginskiRmisc](https://github.com/mbergins/BerginskiRMisc) for my custom theme and helper scripts
+    * The helper script I use calls the "convert" command from imagemagick to trim whitespace around images, so imagemagick will need to be installed as well
   * [DarkKinaseTools](https://github.com/IDG-Kinase/DarkKinaseTools) for kinase lists
 
 ## Data Cleaning and Organization

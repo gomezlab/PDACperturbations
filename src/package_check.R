@@ -28,6 +28,7 @@ p_load(yardstick)
 p_load(ranger)
 p_load(kernlab)
 p_load(xgboost)
+p_load(glmnet)
 
 p_load_gh('mbergins/BerginskiRMisc')
 p_load_gh('IDG-Kinase/DarkKinaseTools')

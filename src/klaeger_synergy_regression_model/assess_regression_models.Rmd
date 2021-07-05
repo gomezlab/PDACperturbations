@@ -22,7 +22,7 @@ get_best_RMSE_model <- function(model_metrics) {
 	model_metrics %>%
 		filter(.metric == "rmse",n == minimum_model_val) %>% 
 		arrange(mean) %>%
-		slice(1) %>%
+		dplyr::slice(1) %>%
 		return()
 }
 

@@ -137,6 +137,7 @@ rand_forest_best_model_parameters[["P1004"]] = rand_forest_res_P1004 %>%
 rand_forest_best_model_parameters[["P1304"]] = rand_forest_res_P1304 %>% 
 	collect_metrics() %>% 
 	filter(.config == rand_forest_results[["P1304"]]$model_id[1], .metric == "roc_auc")
+dir.create(here('results/best_model_configs/'), recursive = T, showWarnings = F)
 write_rds(rand_forest_best_model_parameters,here('results/best_model_configs/rand_forest.rds'))
 
 best_ROC_vals_rand_forest = bind_rows(

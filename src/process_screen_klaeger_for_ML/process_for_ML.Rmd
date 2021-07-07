@@ -13,10 +13,10 @@ library(tidymodels)
 knitr::opts_knit$set(root.dir = here())
 ```
 
-The following section reads in the klaeger data and filters to the collection of compounds that are also in the synergy screen. The data is also rearranged to match up with the expectation that the relative intensity values for every gene will be in a seperate column.
+The following section reads in the klaeger data and filters to the collection of compounds that are also in the screen screen. The data is also rearranged to match up with the expectation that the relative intensity values for every gene will be in a seperate column.
 
 ```{r}
-drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_synergy_drug_matches.csv'))
+drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_screen_drug_matches.csv'))
 
 klaeger = read_rds(here('results/klaeger_full_tidy.rds')) %>%
 	mutate(drug = trimws(drug))
@@ -33,17 +33,17 @@ klaeger_wide = klaeger_compound_matches %>%
 	pivot_wider(names_from = "gene_name", values_from = "relative_intensity")
 ```
 
-The synergy data is processed in much the same way, toss out all the compounds not in the match list and prep the data for combining with Klaeger.
+The screen data is processed in much the same way, toss out all the compounds not in the match list and prep the data for combining with Klaeger.
 
 ```{r}
-synergy = read_rds(here('results/synergy_combined.rds')) %>%
+screen = read_rds(here('results/screen_combined.rds')) %>%
 	mutate(anchor = trimws(anchor), compound = trimws(compound))
 
-synergy_compound_matches = bind_rows(
-	synergy %>%
-		filter(compound %in% drug_matches$synergy_drugs, dose_anchor_m == 0, dose_compound_m != 0),
-	synergy %>%
-		filter(anchor %in% drug_matches$synergy_drugs, dose_compound_m == 0, dose_anchor_m != 0)
+screen_compound_matches = bind_rows(
+	screen %>%
+		filter(compound %in% drug_matches$screen_drugs, dose_anchor_m == 0, dose_compound_m != 0),
+	screen %>%
+		filter(anchor %in% drug_matches$screen_drugs, dose_compound_m == 0, dose_anchor_m != 0)
 ) %>% mutate(drug = case_when(
 	dose_anchor_m == 0 ~ compound,
 	dose_compound_m == 0 ~ anchor
@@ -53,41 +53,41 @@ synergy_compound_matches = bind_rows(
 ))
 
 #Make sure all the expected matches are found in the filtered Klaeger set
-assertthat::assert_that(all(synergy_compound_matches$drug %in% drug_matches$synergy_drugs))
+assertthat::assert_that(all(screen_compound_matches$drug %in% drug_matches$screen_drugs))
 
-synergy_compound_to_join = synergy_compound_matches %>%
+screen_compound_to_join = screen_compound_matches %>%
 	select(drug, dose, cell_line, viability) %>%
-	left_join(drug_matches, by=c('drug' = 'synergy_drugs')) %>%
+	left_join(drug_matches, by=c('drug' = 'screen_drugs')) %>%
 	select(-drug)
 ```
-Now we join up the synergy and Klaeger, followed by a filter to toss out any gene that doesn't vary at all across the matched compounds. Then save out the data frame with the raw viability values and produce a second data set with the viability converted into a binary above/below 90 threshold.
+Now we join up the screen and Klaeger, followed by a filter to toss out any gene that doesn't vary at all across the matched compounds. Then save out the data frame with the raw viability values and produce a second data set with the viability converted into a binary above/below 90 threshold.
 
 ```{r}
-klaeger_synergy = klaeger_wide %>%
-	left_join(synergy_compound_to_join, by=c('drug'='klaeger_drugs','concentration_M'='dose')) %>%
+klaeger_screen = klaeger_wide %>%
+	left_join(screen_compound_to_join, by=c('drug'='klaeger_drugs','concentration_M'='dose')) %>%
 	select(drug,concentration_M,viability,cell_line,everything()) %>%
 	filter(!is.na(viability)) %>% 
 	arrange(cell_line,drug,concentration_M)
 
-klaeger_synergy_tidy = klaeger_synergy %>%
+klaeger_screen_tidy = klaeger_screen %>%
 	pivot_longer(-c('drug','concentration_M','viability','cell_line'), names_to = "gene_name", values_to = 'relative_intensity')
 
-no_gene_variation = klaeger_synergy_tidy %>%
+no_gene_variation = klaeger_screen_tidy %>%
 	group_by(gene_name) %>%
 	summarise(gene_sd = sd(relative_intensity)) %>%
 	filter(gene_sd == 0)
 
-klaeger_synergy_gene_variation = klaeger_synergy %>%
+klaeger_screen_gene_variation = klaeger_screen %>%
 	#toss out the genes with no variation
 	select(-one_of(no_gene_variation$gene_name))
 
-write_rds(klaeger_synergy_gene_variation,here('results/klaeger_screen_for_regression.rds'), compress='gz')
+write_rds(klaeger_screen_gene_variation,here('results/klaeger_screen_for_regression.rds'), compress='gz')
 
-klaeger_synergy_below_90 = klaeger_synergy_gene_variation %>%
+klaeger_screen_below_90 = klaeger_screen_gene_variation %>%
 	mutate(viability_90 = viability <= 90) %>%
 	select(-viability) %>%
 	select(drug,concentration_M,viability_90,cell_line,everything()) %>% 
-	write_rds(here('results/klaeger_synergy_for_classification_90.rds'), compress='gz')
+	write_rds(here('results/klaeger_screen_for_classification_90.rds'), compress='gz')
 
 klaeger_for_prediction = klaeger %>% 
 	filter(!drug %in% drug_matches$klaeger_drugs, 
@@ -113,9 +113,9 @@ Finally, in prep for running cross validation across leave-one-compound-out:
 ```{r}
 cell_line_compound_splits = list()
 
-for (this_cell_line in unique(klaeger_synergy_below_90$cell_line)) {
+for (this_cell_line in unique(klaeger_screen_below_90$cell_line)) {
 	
-	klaeger_data_cell_line = klaeger_synergy_below_90 %>%
+	klaeger_data_cell_line = klaeger_screen_below_90 %>%
 		filter(cell_line == this_cell_line)
 	
 	klaeger_data_cell_line = klaeger_data_cell_line %>%
@@ -144,15 +144,15 @@ for (this_cell_line in unique(klaeger_synergy_below_90$cell_line)) {
 	)
 }
 
-write_rds(cell_line_compound_splits, here('results/klaeger_synergy_classification_90_CV_split.rds'), compress = 'gz')
+write_rds(cell_line_compound_splits, here('results/klaeger_screen_classification_90_CV_split.rds'), compress = 'gz')
 ```
 
 ```{r}
 cell_line_compound_splits = list()
 
-for (this_cell_line in unique(klaeger_synergy_gene_variation$cell_line)) {
+for (this_cell_line in unique(klaeger_screen_gene_variation$cell_line)) {
 	
-	klaeger_data_cell_line = klaeger_synergy_gene_variation %>%
+	klaeger_data_cell_line = klaeger_screen_gene_variation %>%
 		filter(cell_line == this_cell_line) %>%
 		select(-cell_line,-concentration_M)
 	
@@ -179,5 +179,5 @@ for (this_cell_line in unique(klaeger_synergy_gene_variation$cell_line)) {
 	print(names(cell_line_compound_splits))
 }
 
-write_rds(cell_line_compound_splits, here('results/klaeger_synergy_regression_CV_split.rds'), compress = 'gz')
+write_rds(cell_line_compound_splits, here('results/klaeger_screen_regression_CV_split.rds'), compress = 'gz')
 ```

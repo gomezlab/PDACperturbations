@@ -26,7 +26,7 @@ knitr::opts_knit$set(root.dir = here(), include = F)
 # Read In and Combine Klaeger/Synergy Data
 
 ```{r}
-klaeger_synergy_model_data = read_rds(here('results/klaeger_synergy_for_classification_90.rds')) %>%
+klaeger_screen_model_data = read_rds(here('results/klaeger_screen_for_classification_90.rds')) %>%
 	mutate(viability_90 = as.factor(viability_90))
 
 klaeger_for_prediction = read_rds(here('results/klaeger_wide_for_prediction.rds'))
@@ -43,9 +43,9 @@ tic()
 if (!file.exists(here('results/klaeger_below_90_model_set.rds'))) {
 	binary_90_models = list()
 	
-	for (this_cell_line in unique(klaeger_synergy_model_data$cell_line)) {
+	for (this_cell_line in unique(klaeger_screen_model_data$cell_line)) {
 		
-		klaeger_data_cell_line = klaeger_synergy_model_data %>%
+		klaeger_data_cell_line = klaeger_screen_model_data %>%
 			filter(cell_line == this_cell_line) %>%
 			select(-drug,-concentration_M,-cell_line) 
 		

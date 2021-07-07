@@ -8,7 +8,7 @@ library(doParallel)
 
 tic()
 
-cell_line_compound_splits = read_rds(here('results/klaeger_synergy_classification_90_CV_split.rds'))
+cell_line_compound_splits = read_rds(here('results/klaeger_screen_classification_90_CV_split.rds'))
 
 nn_spec = mlp(
 	epochs = tune(),

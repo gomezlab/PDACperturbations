@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="878.53247"
+   height="3840"
+   viewBox="0 0 232.44504 1016"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   sodipodi:docname="klaeger_heat_viability.svg"
+   inkscape:export-filename="./klaeger_heat_viability.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="68.999445"
+     inkscape:cy="3702.6045"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="2488"
+     inkscape:window-height="1369"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="5.5932949,625.92553"
+       orientation="0,-1"
+       id="guide841" />
+    <sodipodi:guide
+       position="4.5905569,-527.0221"
+       orientation="0,-1"
+       id="guide843" />
+    <sodipodi:guide
+       position="126.99999,11.860089"
+       orientation="0,-1"
+       id="guide885" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-340.21887,594.5242)">
+    <image
+       sodipodi:absref="/home/mbergins/Documents/Projects/PDACperturbations/figures/klaeger_EDA/klaeger_heat.png"
+       xlink:href="klaeger_heat.png"
+       y="-568.33838"
+       x="391.59451"
+       id="image867"
+       preserveAspectRatio="none"
+       height="977.9541"
+       width="181.06941" />
+    <image
+       sodipodi:absref="/home/mbergins/Documents/Projects/PDACperturbations/figures/klaeger_EDA/via_curves.png"
+       xlink:href="via_curves.png"
+       transform="rotate(-90)"
+       y="340.21887"
+       x="-421.4758"
+       id="image881"
+       preserveAspectRatio="none"
+       height="50.799999"
+       width="1016" />
+  </g>
+</svg>

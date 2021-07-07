@@ -11,7 +11,7 @@ write_rds(drug_results, here('data/normalized_data.rds'), compress = 'gz')
 ```
 
 ``` r
-synergy = read_rds(here('data/normalized_data.rds')) %>%
+screen = read_rds(here('data/normalized_data.rds')) %>%
     clean_names() %>%
     filter(cell_line != "P140710N1") %>%
     rename(dose_anchor_m = anchor_dose,
@@ -22,5 +22,5 @@ synergy = read_rds(here('data/normalized_data.rds')) %>%
         cell_line == "P130411" ~ "P1304",
         cell_line == "P170119" ~ "CAF"
     )) %>%
-    write_rds(here('results/synergy_combined.rds'), compress = 'gz')
+    write_rds(here('results/screen_combined.rds'), compress = 'gz')
 ```

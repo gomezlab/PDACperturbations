@@ -6,7 +6,7 @@ Matthew Berginski
 # Read In and Combine Klaeger/Synergy Data
 
 ``` r
-klaeger_synergy_model_data = read_rds(here('results/klaeger_synergy_for_classification_90.rds')) %>%
+klaeger_screen_model_data = read_rds(here('results/klaeger_screen_for_classification_90.rds')) %>%
     mutate(viability_90 = as.factor(viability_90))
 
 klaeger_for_prediction = read_rds(here('results/klaeger_wide_for_prediction.rds'))
@@ -26,9 +26,9 @@ distribution of viability predictions.
 
 ## Below 90% Cell Viability
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 CAF_importance = binary_90_models$CAF %>% 
@@ -144,20 +144,20 @@ I’ve done is:
 
 ## Compounds with Low Predicted Effect
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/low%20effect%20below%2090-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/low%20effect%20below%2090-1.png)<!-- -->
 
 ## CAF Survival Max
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/CAF%20survival%20max-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/CAF%20survival%20max-1.png)<!-- -->
 
 ## Compounds with High Predicted Effect
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/high%20effect%20below%2090-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/high%20effect%20below%2090-1.png)<!-- -->
 
 ## Compounds with High Predicted Differences Across Concentrations
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/concentration%20diff%20below%2090-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/concentration%20diff%20below%2090-1.png)<!-- -->
 
 ## Compounds with High Predicted Differences Between Cell Lines
 
-![](build_klaeger_synergy_binary_predictions_files/figure-gfm/cell%20line%20diff%20below%2090-1.png)<!-- -->
+![](build_klaeger_screen_binary_predictions_files/figure-gfm/cell%20line%20diff%20below%2090-1.png)<!-- -->

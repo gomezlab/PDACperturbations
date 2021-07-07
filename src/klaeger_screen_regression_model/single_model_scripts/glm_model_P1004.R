@@ -9,7 +9,7 @@ library(doParallel)
 tic()
 doParallel::registerDoParallel(cores=detectCores() - 2)
 
-cell_line_compound_splits = read_rds(here('results/klaeger_synergy_regression_CV_split.rds'))
+cell_line_compound_splits = read_rds(here('results/klaeger_screen_regression_CV_split.rds'))
 
 norm_recipe <- 
 	recipe(

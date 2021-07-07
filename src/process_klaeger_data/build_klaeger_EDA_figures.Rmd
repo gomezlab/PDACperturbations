@@ -13,44 +13,44 @@ knitr::opts_knit$set(root.dir = here())
 ```
 
 ```{r}
-klaeger_synergy_data = read_rds(here('results/klaeger_synergy_for_regression.rds'))
+klaeger_screen_data = read_rds(here('results/klaeger_screen_for_regression.rds'))
 
-cell_viability_summary = klaeger_synergy_data %>%
+cell_viability_summary = klaeger_screen_data %>%
 	select(drug, concentration_M, viability, cell_line) %>%
 	group_by(cell_line,concentration_M, drug) %>%
 	summarise(mean_via = mean(viability))
 
-klaeger_synergy_data_unique = klaeger_synergy_data %>% select(-cell_line,-viability) %>% unique()
+klaeger_screen_data_unique = klaeger_screen_data %>% select(-cell_line,-viability) %>% unique()
 
-klaeger_synergy_data_unique_tidy = klaeger_synergy_data_unique %>%
+klaeger_screen_data_unique_tidy = klaeger_screen_data_unique %>%
 	pivot_longer(-c(drug, concentration_M), names_to = "gene", values_to = "relative_intensity")
 
-num_affected_kinases = klaeger_synergy_data_unique_tidy %>%
+num_affected_kinases = klaeger_screen_data_unique_tidy %>%
 	group_by(drug) %>%
 	summarise(count = sum(relative_intensity != 1)) %>% 
 	arrange(count)
 
-num_kinase_hits = klaeger_synergy_data_unique_tidy %>%
+num_kinase_hits = klaeger_screen_data_unique_tidy %>%
 	group_by(gene) %>%
 	summarise(count = sum(relative_intensity != 1)) %>% 
 	arrange(desc(count)) %>%
 	mutate(X = 1:length(count))
 
-klaeger_synergy_data_unique = klaeger_synergy_data_unique %>% 
+klaeger_screen_data_unique = klaeger_screen_data_unique %>% 
 	mutate(drug = fct_relevel(as.factor(drug), num_affected_kinases$drug)) %>% 
 	arrange(drug, concentration_M) %>%
 	mutate(Y = 1:length(drug))
 
-klaeger_synergy_data_unique_tidy = klaeger_synergy_data_unique_tidy %>%
+klaeger_screen_data_unique_tidy = klaeger_screen_data_unique_tidy %>%
 	left_join(num_kinase_hits %>% select(gene, X)) %>%
-	left_join(klaeger_synergy_data_unique %>% select(drug, concentration_M,Y)) %>%
+	left_join(klaeger_screen_data_unique %>% select(drug, concentration_M,Y)) %>%
 	mutate(relative_intensity = ifelse(relative_intensity > 2, 2, relative_intensity))
 ```
 
 ```{r}
-heat_labels = klaeger_synergy_data_unique_tidy %>% group_by(drug) %>% summarise(mean_Y = mean(Y)) %>% mutate(X = -50, relative_intensity = 2)
+heat_labels = klaeger_screen_data_unique_tidy %>% group_by(drug) %>% summarise(mean_Y = mean(Y)) %>% mutate(X = -50, relative_intensity = 2)
 
-klaeger_heat = ggplot(klaeger_synergy_data_unique_tidy, aes(x=X,y=Y,fill=relative_intensity)) +
+klaeger_heat = ggplot(klaeger_screen_data_unique_tidy, aes(x=X,y=Y,fill=relative_intensity)) +
 	geom_tile() + 
 	theme_void() +
 	scale_fill_gradient2(low = rgb(0.60,0.557,0.765,1), mid = rgb(1,1,1,1), high = rgb(0.946,0.639,0.251,1), midpoint = 1)

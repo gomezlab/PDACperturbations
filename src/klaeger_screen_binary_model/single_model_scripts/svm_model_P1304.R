@@ -10,7 +10,7 @@ knitr::opts_knit$set(root.dir = here())
 
 doParallel::registerDoParallel(cores=detectCores() - 2)
 
-cell_line_compound_splits = read_rds(here('results/klaeger_synergy_classification_90_CV_split.rds'))
+cell_line_compound_splits = read_rds(here('results/klaeger_screen_classification_90_CV_split.rds'))
 
 svm_spec <- svm_poly(
 	cost = tune(), 

@@ -16,7 +16,7 @@ knitr::opts_knit$set(root.dir = here())
 The following section reads in the klaeger data and filters to the collection of compounds that are also in the synergy screen. The data is also rearranged to match up with the expectation that the relative intensity values for every gene will be in a seperate column.
 
 ```{r}
-drug_matches = read_csv(here('src/find_synergy_klaeger_matches/klaeger_synergy_drug_matches.csv'))
+drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_synergy_drug_matches.csv'))
 
 klaeger = read_rds(here('results/klaeger_full_tidy.rds')) %>%
 	mutate(drug = trimws(drug))
@@ -81,7 +81,7 @@ klaeger_synergy_gene_variation = klaeger_synergy %>%
 	#toss out the genes with no variation
 	select(-one_of(no_gene_variation$gene_name))
 
-write_rds(klaeger_synergy_gene_variation,here('results/klaeger_synergy_for_regression.rds'), compress='gz')
+write_rds(klaeger_synergy_gene_variation,here('results/klaeger_screen_for_regression.rds'), compress='gz')
 
 klaeger_synergy_below_90 = klaeger_synergy_gene_variation %>%
 	mutate(viability_90 = viability <= 90) %>%

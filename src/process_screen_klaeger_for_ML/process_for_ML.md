@@ -1,10 +1,15 @@
 Process Data for ML
 ================
 Matthew Berginski
-2021-06-02
+2021-07-07
+
+The following section reads in the klaeger data and filters to the
+collection of compounds that are also in the synergy screen. The data is
+also rearranged to match up with the expectation that the relative
+intensity values for every gene will be in a seperate column.
 
 ``` r
-drug_matches = read_csv(here('src/find_synergy_klaeger_matches/klaeger_synergy_drug_matches.csv'))
+drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_synergy_drug_matches.csv'))
 ```
 
     ## 
@@ -33,6 +38,10 @@ assertthat::assert_that(all(klaeger_compound_matches$drug %in% drug_matches$klae
 klaeger_wide = klaeger_compound_matches %>%
     pivot_wider(names_from = "gene_name", values_from = "relative_intensity")
 ```
+
+The synergy data is processed in much the same way, toss out all the
+compounds not in the match list and prep the data for combining with
+Klaeger.
 
 ``` r
 synergy = read_rds(here('results/synergy_combined.rds')) %>%
@@ -64,11 +73,18 @@ synergy_compound_to_join = synergy_compound_matches %>%
     select(-drug)
 ```
 
+Now we join up the synergy and Klaeger, followed by a filter to toss out
+any gene that doesn’t vary at all across the matched compounds. Then
+save out the data frame with the raw viability values and produce a
+second data set with the viability converted into a binary above/below
+90 threshold.
+
 ``` r
 klaeger_synergy = klaeger_wide %>%
     left_join(synergy_compound_to_join, by=c('drug'='klaeger_drugs','concentration_M'='dose')) %>%
     select(drug,concentration_M,viability,cell_line,everything()) %>%
-    filter(!is.na(viability))
+    filter(!is.na(viability)) %>% 
+    arrange(cell_line,drug,concentration_M)
 
 klaeger_synergy_tidy = klaeger_synergy %>%
     pivot_longer(-c('drug','concentration_M','viability','cell_line'), names_to = "gene_name", values_to = 'relative_intensity')
@@ -82,11 +98,110 @@ klaeger_synergy_gene_variation = klaeger_synergy %>%
     #toss out the genes with no variation
     select(-one_of(no_gene_variation$gene_name))
 
-write_rds(klaeger_synergy_gene_variation,here('results/klaeger_synergy_for_regression.rds'))
+write_rds(klaeger_synergy_gene_variation,here('results/klaeger_screen_for_regression.rds'), compress='gz')
 
-klaeger_synergy_gene_variation %>%
+klaeger_synergy_below_90 = klaeger_synergy_gene_variation %>%
     mutate(viability_90 = viability <= 90) %>%
     select(-viability) %>%
     select(drug,concentration_M,viability_90,cell_line,everything()) %>% 
-    write_rds(here('results/klaeger_synergy_for_classification_90.rds'))
+    write_rds(here('results/klaeger_synergy_for_classification_90.rds'), compress='gz')
+
+klaeger_for_prediction = klaeger %>% 
+    filter(!drug %in% drug_matches$klaeger_drugs, 
+                 concentration_M != 0,
+                 ! gene_name %in% no_gene_variation$gene_name)
+
+#After filtering out all the genes without variance in the klaeger set, there
+#are probably a few drugs that don't hit any of the genes included in the model.
+#So I'll find those and filter them in the next step.
+klaeger_prediction_no_variation = klaeger_for_prediction %>% 
+    group_by(drug) %>% 
+    summarise(relative_sd = sd(relative_intensity)) %>% 
+    filter(relative_sd == 0)
+
+klaeger_wide_for_prediction = klaeger_for_prediction %>%
+    filter(! drug %in% klaeger_prediction_no_variation$drug) %>%
+    pivot_wider(names_from = "gene_name", values_from = "relative_intensity") %>%
+    write_rds(here('results/klaeger_wide_for_prediction.rds'), compress='gz')
+```
+
+Finally, in prep for running cross validation across
+leave-one-compound-out:
+
+``` r
+cell_line_compound_splits = list()
+
+for (this_cell_line in unique(klaeger_synergy_below_90$cell_line)) {
+    
+    klaeger_data_cell_line = klaeger_synergy_below_90 %>%
+        filter(cell_line == this_cell_line)
+    
+    klaeger_data_cell_line = klaeger_data_cell_line %>%
+        select(-cell_line,-concentration_M) %>%
+        mutate(viability_90 = as.factor(viability_90))
+    
+    splits = list()
+    index = 1
+    id = c()
+    for (exclude_compound in unique(klaeger_data_cell_line$drug)) {
+        assessment_ids = which(klaeger_data_cell_line$drug == exclude_compound)
+        analysis_ids = which(klaeger_data_cell_line$drug != exclude_compound)
+        
+        splits[[index]] = make_splits(list("analysis" = analysis_ids,"assessment" = assessment_ids),
+                                                                    klaeger_data_cell_line %>% select(-drug))
+        index = index + 1
+        
+        id = c(id,exclude_compound)
+    }
+    
+    cell_line_compound_splits[[this_cell_line]] = new_rset(
+        splits = splits,
+        ids = id,
+        attrib = paste0("Per compound cv splits for ", this_cell_line),
+        subclass = c("vfold_cv", "rset")
+    )
+}
+
+write_rds(cell_line_compound_splits, here('results/klaeger_synergy_classification_90_CV_split.rds'), compress = 'gz')
+```
+
+``` r
+cell_line_compound_splits = list()
+
+for (this_cell_line in unique(klaeger_synergy_gene_variation$cell_line)) {
+    
+    klaeger_data_cell_line = klaeger_synergy_gene_variation %>%
+        filter(cell_line == this_cell_line) %>%
+        select(-cell_line,-concentration_M)
+    
+    splits = list()
+    index = 1
+    id = c()
+    for (exclude_compound in unique(klaeger_data_cell_line$drug)) {
+        assessment_ids = which(klaeger_data_cell_line$drug == exclude_compound)
+        analysis_ids = which(klaeger_data_cell_line$drug != exclude_compound)
+        
+        splits[[index]] = make_splits(list("analysis" = analysis_ids,"assessment" = assessment_ids),
+                                                                    klaeger_data_cell_line %>% select(-drug))
+        index = index + 1
+        
+        id = c(id,exclude_compound)
+    }
+    
+    cell_line_compound_splits[[this_cell_line]] = new_rset(
+        splits = splits,
+        ids = id,
+        attrib = paste0("Per compound cv splits for ", this_cell_line),
+        subclass = c("vfold_cv", "rset")
+    )
+    print(names(cell_line_compound_splits))
+}
+```
+
+    ## [1] "CAF"
+    ## [1] "CAF"   "P1004"
+    ## [1] "CAF"   "P1004" "P1304"
+
+``` r
+write_rds(cell_line_compound_splits, here('results/klaeger_synergy_regression_CV_split.rds'), compress = 'gz')
 ```

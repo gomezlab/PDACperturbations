@@ -1,10 +1,10 @@
 Process YehLabHTS Data for ML
 ================
 Matthew Berginski
-2021-06-16
+2021-07-07
 
 ``` r
-#loading and then reoutputing the synergy screen results
+#loading and then reoutputing the screen results
 load(here('data/normalized_data.RData'))
 
 write_rds(drug_results, here('data/normalized_data.rds'), compress = 'gz')

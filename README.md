@@ -7,10 +7,9 @@ Data and code associated with kinase activation state and cell viabiltiy modelin
 I've written a [script](src/package_check.R) that checks for and installs all of the packages required in the repository. I use the pacman package for this purpose and installing pacman if missing is covered in the script. There are also two github based packages:
 
   * [BerginskiRmisc](https://github.com/mbergins/BerginskiRMisc) for my custom theme and helper scripts
-    * The helper script I use calls the "convert" command from imagemagick to trim whitespace around images, so imagemagick will need to be installed as well
+    * The helper script I use calls the "convert" command from imagemagick to trim whitespace around figures, but this functionality isn't critical for the rest of the results
   * [DarkKinaseTools](https://github.com/IDG-Kinase/DarkKinaseTools) for kinase lists
 
-The BerginskiRmisc package uses the convert command from Imagemagick to trim whitespace around images, if you don't have Imagemagick installed it should work with a failure message.
 
 ## Data Cleaning and Organization
 

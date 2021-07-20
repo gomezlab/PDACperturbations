@@ -221,13 +221,21 @@ all_ROC_vals = bind_rows(
 	best_ROC_vals_xgboost,
 	best_ROC_vals_rand_forest,
 	best_ROC_vals_svm
-)
+) %>% mutate(cell_line = case_when(
+	cell_line == "P1004" ~ "P0422-T1",
+	cell_line == "P1304" ~ "P0411-T1",
+	cell_line == "CAF" ~ "P0119-T1 CAF"
+))
 
 all_PRC_vals = bind_rows(
 	best_PRC_vals_xgboost,
 	best_PRC_vals_rand_forest,
 	best_PRC_vals_svm
-)
+) %>% mutate(cell_line = case_when(
+	cell_line == "P1004" ~ "P0422-T1",
+	cell_line == "P1304" ~ "P0411-T1",
+	cell_line == "CAF" ~ "P0119-T1 CAF"
+))
 
 # ROC_data = tribble(
 # 	~"Cell Line",~"Model Type",~"AUROC",
@@ -272,7 +280,11 @@ ROC_text = tribble(
 	"P1304",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$P1304$roc[1]), "\n", 
 								 "XGBoost: ",sprintf("%.3f",xgboost_results$P1304$roc[5]), "\n", 
 								 "SVM: ",sprintf("%.3f",svm_results$P1304$roc[1])),
-)
+) %>% mutate(cell_line = case_when(
+	cell_line == "P1004" ~ "P0422-T1",
+	cell_line == "P1304" ~ "P0411-T1",
+	cell_line == "CAF" ~ "P0119-T1 CAF"
+))
 
 ROC_plots = ggplot(all_ROC_vals, aes(x=fpr, y=tpr,color=model_type)) + 
 	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
@@ -295,14 +307,22 @@ PRC_text = tribble(
 	"P1304",paste0("Rand Forest: ",sprintf("%.3f",rand_forest_results$P1304$prc[1]), "\n", 
 								 "XGBoost: ",sprintf("%.3f",xgboost_results$P1304$prc[5]), "\n", 
 								 "SVM: ",sprintf("%.3f",svm_results$P1304$prc[1])),
-)
+) %>% mutate(cell_line = case_when(
+	cell_line == "P1004" ~ "P0422-T1",
+	cell_line == "P1304" ~ "P0411-T1",
+	cell_line == "CAF" ~ "P0119-T1 CAF"
+))
 
 PRC_guessing_lines = tribble(
 	~cell_line,~yintercept,
 	"CAF",mean(as.logical(rand_forest_res_CAF$splits[[1]]$data$viability_90)),
 	"P1004",mean(as.logical(rand_forest_res_P1004$splits[[1]]$data$viability_90)),
 	"P1304",mean(as.logical(rand_forest_res_P1304$splits[[1]]$data$viability_90)),
-)
+) %>% mutate(cell_line = case_when(
+	cell_line == "P1004" ~ "P0422-T1",
+	cell_line == "P1304" ~ "P0411-T1",
+	cell_line == "CAF" ~ "P0119-T1 CAF"
+))
 
 PRC_plots = ggplot(all_PRC_vals, aes(x=recall, y=precision,color=model_type)) + 
 	geom_line(alpha = 0.75) + 

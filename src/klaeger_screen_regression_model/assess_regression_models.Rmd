@@ -131,7 +131,19 @@ rmse_text = tribble(
 	"P1304", "XGBoost", best_RMSE_models$XGBoost$P1304$mean,
 ) %>% mutate(x = range(best_predictions$viability)[2],
 						 y = range(best_predictions$viability)[1],
-						 RMSE_text = paste0("RMSE: ",round(RMSE,1))) 
+						 RMSE_text = paste0("RMSE: ",round(RMSE,1))) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	))
+
+best_predictions = best_predictions %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	))
 
 ggplot(best_predictions, aes(x=viability, y=.pred)) + 
 	ylim(range(best_predictions$viability)) + 

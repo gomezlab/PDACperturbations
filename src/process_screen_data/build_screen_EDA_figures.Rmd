@@ -28,7 +28,12 @@ knitr::opts_knit$set(root.dir = here::here())
 This chunk of code reads in the pre-processed Klaeger/Synergy data.
 
 ```{r}
-klaeger_data_matches_full = read_rds(here('results/klaeger_screen_for_regression.rds'))
+klaeger_data_matches_full = read_rds(here('results/klaeger_screen_for_regression.rds')) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	))
 ```
 
 ```{r data organization by viability}

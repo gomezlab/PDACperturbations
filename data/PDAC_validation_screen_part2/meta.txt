@@ -1,0 +1,12 @@
+1 - BCD - Masitinib
+1 - EFG - Ripadusil 
+2 - BCD - AT-13148
+2 - EFG - RGB-286638
+3 - BCD - PHA-793887
+3 - EFG - AT-9283
+4 - BCD - Lestaurtinib
+4 - EFG - KW-2449
+5 - BCD - K-252a
+5 - EFG - PF-03814735
+6 - XL-228
+6 - JANEX-1

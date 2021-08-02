@@ -1,0 +1,166 @@
+---
+title: "Assess Viability Screen Results"
+author: "Matthew Berginski"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(ROCR)
+library(patchwork)
+library(broom)
+
+knitr::opts_knit$set(root.dir = here())
+```
+
+```{r}
+load(here('data/viability_testing_results.RData'))
+
+klaeger_below90_model_predictions <- readRDS(here('results/klaeger_below90_model_predictions.rds'))
+```
+
+```{r}
+testing_results = final
+
+testing_results = testing_results %>%
+	rename(drug = Drug, cell_line = CellLine, actual_viability = relViability) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P100422" ~ "P1004",
+		cell_line == "P130411" ~ "P1304",
+		cell_line == "P170119" ~ "CAF",
+		TRUE ~ "Missing Cell Line"
+	)) %>%
+	mutate(drug =  case_when(
+		drug == "AZD8186" ~ "AZD-8186",
+		TRUE ~ drug
+	)) %>%
+	#Doses under 0.1 are the no-treatment controls, we won't have matches for
+	#those, so remove them here.
+	filter(Dose_nM > 0.1) %>%
+	mutate(concentration_M = Dose_nM/1e9) %>%
+	mutate(viability_90 = actual_viability < 90) %>%
+	select(-luminescence,-Dose_nM) %>%
+	filter(cell_line != "P1304") %>%
+	identity()
+
+testing_results = testing_results %>% 
+	left_join(klaeger_below90_model_predictions)
+```
+
+```{r}
+get_ROC = function(these_results) {
+	pred <- prediction(these_results$prob_below_90,these_results$viability_90)
+	perf_roc <- performance(pred, measure = "auc")
+	return(perf_roc@y.values[[1]])
+}
+
+get_ROC_plot_data = function(these_results,cell_line,drug) {
+	pred <- prediction(these_results$prob_below_90,these_results$viability_90)
+	perf <- performance(pred,measure = "tpr",x.measure = "fpr")
+	return(data.frame(fpr = perf@x.values[[1]],
+										tpr = perf@y.values[[1]],
+										cell_line = cell_line,
+										drug = drug))
+}
+
+get_AUPRC = function(these_results) {
+	pred <- prediction(these_results$prob_below_90,these_results$viability_90)
+	prc_roc <- performance(pred, measure = "aucpr")
+	return(prc_roc@y.values[[1]])
+}
+
+get_AUPRC_plot_data = function(these_results,cell_line,drug) {
+	pred <- prediction(these_results$prob_below_90,these_results$viability_90)
+	perf <- performance(pred,measure = "prec",x.measure = "rec")
+	return(data.frame(precision = perf@y.values[[1]],
+										recall = perf@x.values[[1]],
+										cell_line = cell_line,
+										drug = drug))
+}
+
+model_assessments = testing_results %>%
+	group_by(cell_line, drug) %>%
+	nest() %>%
+	mutate(cor_val = map_dbl(data, ~tidy(cor.test(.x$actual_viability, .x$prob_below_90))$estimate)) %>%
+	mutate(cor_conf_low = map_dbl(data, ~tidy(cor.test(.x$actual_viability, .x$prob_below_90))$conf.low)) %>%
+	mutate(cor_conf_high = map_dbl(data, ~tidy(cor.test(.x$actual_viability, .x$prob_below_90))$conf.high)) %>%
+	mutate(ROC = map_dbl(data, get_ROC)) %>%
+	mutate(ROC_plot_data = pmap(list(data,cell_line,drug), get_ROC_plot_data)) %>%
+	mutate(PRC = map_dbl(data, get_AUPRC)) %>%
+	mutate(PRC_plot_data = pmap(list(data,cell_line,drug), get_AUPRC_plot_data)) %>%
+	mutate(percent_pos = map_dbl(data, ~mean(.x$viability_90))) %>%
+	identity()
+
+
+# pred <- prediction(testing_results$prob_below_90,testing_results$viability_90)
+# perf <- performance(pred,measure = "tpr",x.measure = "fpr")
+# perf_roc <- performance(pred, measure = "auc")
+# 
+# ROC_vals = data.frame(fpr = perf@x.values[[1]],
+# 											tpr = perf@y.values[[1]])
+# 
+# ROC_plots = ggplot(ROC_vals, aes(x=fpr, y=tpr)) + 
+# 	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
+# 	geom_line(alpha=0.75) + 
+# 	# geom_text(mapping=aes(x=1,y=0,label=text),data=ROC_text,color='black',vjust="inward",hjust="inward",size=3.5) +
+# 	# geom_segment(x=0,y=0,xend=1,yend=1) +
+# 	xlim(c(0,1)) + ylim(c(0,1)) +
+# 	labs(x="False Positive Rate",y="True Positive Rate") +
+# 	BerginskiRMisc::theme_berginski()
+```
+
+```{r}
+full_ROC_vals = reduce(model_assessments$ROC_plot_data,bind_rows)
+
+ROC_plots = ggplot(full_ROC_vals, aes(x=fpr, y=tpr, color=cell_line)) + 
+	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
+	geom_line(alpha=0.75) + 
+	# geom_text(mapping=aes(x=1,y=0,label=text),data=ROC_text,color='black',vjust="inward",hjust="inward",size=3.5) +
+	# geom_segment(x=0,y=0,xend=1,yend=1) +
+	xlim(c(0,1)) + ylim(c(0,1)) +
+	labs(x="False Positive Rate",y="True Positive Rate", color="Cell Line") +
+	BerginskiRMisc::theme_berginski() +
+	theme(axis.text.x = element_text(angle = 90,vjust=0.5)) +
+	scale_color_brewer(type = "qual", palette = "Dark2") +
+	facet_wrap(~drug, nrow = 1)
+
+full_AUPRC_vals = reduce(model_assessments$PRC_plot_data,bind_rows)
+
+PRC_plots = ggplot(full_AUPRC_vals, aes(x=recall,y=precision,color=cell_line)) + 
+	geom_hline(data=model_assessments, mapping = aes(yintercept = percent_pos, color=cell_line), alpha=0.5, linetype=2) +
+	geom_line(alpha=0.75) + 
+	# geom_text(mapping=aes(x=1,y=0,label=text),data=ROC_text,color='black',vjust="inward",hjust="inward",size=3.5) +
+	# geom_segment(x=0,y=0,xend=1,yend=1) +
+	xlim(c(0,1)) + ylim(c(0,1)) +
+	labs(x="Recall",y="Precision",color="Cell Line") +
+	BerginskiRMisc::theme_berginski() +
+	theme(axis.text.x = element_text(angle = 90,vjust=0.5)) +
+	scale_color_brewer(type = "qual", palette = "Dark2") +
+	facet_wrap(~drug, nrow = 1)
+
+full_assess = ROC_plots / PRC_plots
+ggsave(here('figures/prediction_results/new_compound_results.png'),width=9*0.75,height=5*0.75)
+BerginskiRMisc::trimImage(here('figures/prediction_results/new_compound_results.png'))
+```
+
+```{r}
+ggplot(testing_results, aes(x=concentration_M, y = actual_viability)) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	geom_hline(aes(yintercept = 90)) +
+	facet_wrap(vars(cell_line,drug), nrow = 2)
+```
+
+
+```{r}
+ggplot(testing_results, aes(x=prob_below_90, y = actual_viability, color = concentration_M)) +
+	scale_x_log10() +
+	scale_color_viridis_c(trans = "log10") +
+	geom_jitter() +
+	geom_smooth(method = "lm") +
+	geom_hline(aes(yintercept = 90)) +
+	facet_wrap(vars(cell_line,drug),nrow=2)
+```

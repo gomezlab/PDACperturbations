@@ -94,6 +94,16 @@ model_assessments = testing_results %>%
 ```
 
 ```{r}
+ggplot(testing_results, aes(x=prob_below_90,y=actual_viability)) + 
+	geom_point(size=0.25,alpha=0.5) + 
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski()
+
+ggsave(here('figures/validation_testing/global_pred_vs_actual.png'), height=4,width=4)
+BerginskiRMisc::trimImage(here('figures/validation_testing/global_pred_vs_actual.png'))
+```
+
+```{r}
 global_ROC_score = get_ROC(testing_results)
 global_ROC = get_ROC_plot_data(testing_results,"all","all")
 

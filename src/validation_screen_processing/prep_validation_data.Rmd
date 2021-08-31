@@ -171,6 +171,68 @@ ggsave(here('figures/validation_testing/validation_viability.png'),width=18*0.75
 BerginskiRMisc::trimImage(here('figures/validation_testing/validation_viability.png'))
 ```
 
+```{r}
+compound_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887","AT-9283","Lestaurtinib","K-252a","PF-03814735","XL-228")
+
+ggplot(plate_vals %>% filter(compound %in% compound_order) %>%
+			 	mutate(compound = fct_relevel(compound, compound_order)), aes(x=concentration_M, y = viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(cols = vars(compound))
+
+ggsave(here('figures/validation_testing/validation_viability_cell_line.png'),width=18*0.75,height=3*0.75)
+BerginskiRMisc::trimImage(here('figures/validation_testing/validation_viability_cell_line.png'))
+```
+
+```{r}
+low_plots = ggplot(plate_vals %>% 
+									 	filter(compound %in% c("Masitinib","Ripasudil","AT-13148")) %>%
+									 	mutate(compound = fct_relevel(compound,c("Masitinib","Ripasudil","AT-13148"))), 
+									 aes(x=concentration_M, y = viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(cols = vars(compound))
+
+high_eff_plots = ggplot(plate_vals %>% 
+									 	filter(compound %in% c("TG-100572","RGB-286638","PHA-793887")) %>%
+									 	mutate(compound = fct_relevel(compound,c("RGB-286638","PHA-793887"))), 
+									 aes(x=concentration_M, y = viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(cols = vars(compound))
+
+concen_plots = ggplot(plate_vals %>% 
+									 	filter(compound %in% c("AT-9283","Lestaurtinib","TAK-901")) %>%
+									 	mutate(compound = fct_relevel(compound,c("AT-9283","Lestaurtinib"))), 
+									 aes(x=concentration_M, y = viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(cols = vars(compound))
+
+cell_line_plots = ggplot(plate_vals %>% 
+									 	filter(compound %in% c("K-252a","PF-03814735","XL-228")) %>%
+									 	mutate(compound = fct_relevel(compound,c("K-252a","PF-03814735","XL-228"))), 
+									 aes(x=concentration_M, y = viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(cols = vars(compound))
+```
+
 
 # Part 1 Processing
 

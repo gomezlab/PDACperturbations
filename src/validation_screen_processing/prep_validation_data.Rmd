@@ -136,50 +136,60 @@ plate_vals_part2 = bind_rows(
 	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_6.xlsx'),c("XL-228","JANEX-1"),"P1004")
 )
 
-plate_vals_part1 = bind_rows(
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/411_1.xlsx'),c("Masitinib","Ripasudil"),"P1304", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/411_2.xlsx'),c("AT-13148","RGB-286638"),"P1304", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/411_3.xlsx'),c("PHA-793887","AT-9283"),"P1304", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/411_4.xlsx'),c("Lestaurtinib","KW-2449"),"P1304", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/411_5a.xlsx'),c("PF-03814735","XL-228"),"P1304", skip_lines = 14),
-	
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/422_1.xlsx'),c("Masitinib","Ripasudil"),"P1004", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/422_2.xlsx'),c("AT-13148","RGB-286638"),"P1004", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/422_3.xlsx'),c("PHA-793887","AT-9283"),"P1004", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/422_4.xlsx'),c("Lestaurtinib","KW-2449"),"P1004", skip_lines = 14),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part1/422_5a.xlsx'),c("PF-03814735","XL-228"),"P1004", skip_lines = 14)
-)
-
 if (any(is.na(plate_vals_part2$concentration_M)) | any(is.na(plate_vals_part3$concentration_M))) {
 	stop("Found missing concentration value, this shouldn't happen.")
 }
-
 ```
 
 # Per Plate DMSO Boxplots
 
 ```{r}
-temp = plate_vals_part3 %>%
+all_DMSO_vals = plate_vals_part3 %>%
 	filter(compound == "DMSO") %>%
+	mutate(plate_name = paste0("p3_", plate_name)) %>%
 	bind_rows(
 		plate_vals_part2 %>%
 			filter(compound == "DMSO") %>%
-			mutate(plate_name = paste0("p1_",plate_name))
-		
-	)
-
-temp = temp %>%
-	bind_rows(
-		plate_vals_part1 %>%
-			filter(compound == "DMSO") %>%
-			mutate(plate_name = paste0("p1_",plate_name))
+			mutate(plate_name = paste0("p2_", plate_name))
 	)
 
 
-ggplot(temp, aes(x=plate_name,y=lum)) + 
+ggplot(all_DMSO_vals, aes(x=plate_name,y=lum)) + 
 	geom_boxplot() +
 	# ylim(c(min(plate_vals$lum), NA)) +
 	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+# Per Plate DMSO Tests
+
+```{r}
+DMSO_checks_part2 = plate_vals_part2 %>% 
+	bind_rows(plate_vals_part3) %>%
+	filter(compound == "DMSO") %>%
+	group_by(plate_name) %>%
+	nest() %>%
+	mutate(DMSO_1 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 1, 1, 0))))$p.value)) %>%
+	mutate(DMSO_2 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 2, 1, 0))))$p.value)) %>%
+	mutate(DMSO_3 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 3, 1, 0))))$p.value)) %>%
+	mutate(DMSO_4 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 4, 1, 0))))$p.value)) %>%
+	mutate(DMSO_5 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 5, 1, 0))))$p.value)) %>%
+	mutate(DMSO_6 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
+																			data = .x %>% 
+																				mutate(target_row = ifelse(row == 6, 1, 0))))$p.value)) %>%
+	select(-data) %>%
+	pivot_longer(-plate_name, values_to = "p.value", names_to = "DMSO_row") %>%
+	mutate(p.value.adj = p.adjust(p.value, method="fdr"))
+
 ```
 
 
@@ -205,12 +215,6 @@ ggplot(treatment_lum_summaries_part3, aes(x=CV)) + geom_histogram()
 ```
 
 ```{r}
-plate_DMSO_means_part1 = plate_vals_part1 %>%
-	filter(compound == "DMSO") %>%
-	group_by(row, plate_name) %>%
-	summarise(DMSO_mean = mean(lum),
-						num_DMSO = n())
-
 plate_DMSO_means_part2 = plate_vals_part2 %>%
 	filter(compound == "DMSO") %>%
 	group_by(row, plate_name) %>%
@@ -253,11 +257,6 @@ qc_filter <- function(data_set, viability_threshold = 120) {
 
 dir.create(here('results/validation_results/'), showWarnings = F)
 
-plate_vals_part1 = plate_vals_part1 %>%
-	left_join(plate_DMSO_means_part1) %>% 
-	mutate(viability = lum/DMSO_mean*100) %>%
-	write_rds(here('results/validation_results/validation_screen_part1.rds'))
-
 plate_vals_part2 = plate_vals_part2 %>%
 	left_join(plate_DMSO_means_part2) %>% 
 	mutate(viability = lum/DMSO_mean*100) %>%
@@ -285,15 +284,6 @@ treatment_via_summaries_part3 = plate_vals_part3 %>%
 ```
 
 ```{r}
-a = ggplot(plate_vals_part1 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability)) +
-	geom_hline(aes(yintercept = 90),alpha=0.5) +
-	scale_x_log10() +
-	geom_jitter() +
-	geom_smooth() +
-	BerginskiRMisc::theme_berginski() +
-	facet_grid(rows = vars(cell_line), cols = vars(compound)) +
-	ggtitle("Replicate 1")
-
 b = ggplot(plate_vals_part2 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
 	geom_hline(aes(yintercept = 90),alpha=0.5) +
 	geom_hline(aes(yintercept = 100),alpha=0.5, linetype = 2) +

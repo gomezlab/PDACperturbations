@@ -16,7 +16,12 @@ knitr::opts_knit$set(root.dir = here())
 ```
 
 ```{r}
-testing_results = read_rds(here('results/validation_results/validation_screen.rds'))
+compound_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887","AT-9283","Lestaurtinib","K-252a","PF-03814735","XL-228")
+
+testing_results = bind_rows(
+	read_rds(here('results/validation_results/validation_screen_part2.rds')),
+	read_rds(here('results/validation_results/validation_screen_part3.rds'))
+) %>% filter(compound %in% compound_order, ! qc_fail) 
 
 klaeger_below90_model_predictions <- readRDS(here('results/klaeger_below90_model_predictions.rds'))
 ```
@@ -71,8 +76,14 @@ get_AUPRC_plot_data = function(these_results,cell_line,drug) {
 	}
 	pred <- prediction(these_results$prob_below_90,these_results$viability_90)
 	perf <- performance(pred,measure = "prec",x.measure = "rec")
-	return(data.frame(precision = perf@y.values[[1]],
-										recall = perf@x.values[[1]],
+	
+	sorted_prediction_data = these_results %>% arrange(desc(prob_below_90))
+	
+	precision_vals = perf@y.values[[1]]
+	precision_vals[1] = if_else(sorted_prediction_data$viability_90[1],1,0)
+	recall_vals = perf@x.values[[1]]
+	return(data.frame(precision = precision_vals,
+										recall = recall_vals,
 										cell_line = cell_line,
 										drug = drug))
 }
@@ -90,6 +101,12 @@ model_assessments = testing_results %>%
 	mutate(PRC = map_dbl(data, get_AUPRC)) %>%
 	mutate(PRC_plot_data = pmap(list(data,cell_line,drug), get_AUPRC_plot_data)) %>%
 	mutate(percent_pos = map_dbl(data, ~mean(.x$viability_90))) %>%
+	ungroup() %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	)) %>% mutate(drug = fct_relevel(drug,compound_order)) %>%
 	identity()
 ```
 
@@ -97,9 +114,10 @@ model_assessments = testing_results %>%
 ggplot(testing_results, aes(x=prob_below_90,y=actual_viability)) + 
 	geom_point(size=0.25,alpha=0.5) + 
 	geom_smooth() +
+	labs(x="Probability Cell Viability Below 90%", y="Cell Viability") +
 	BerginskiRMisc::theme_berginski()
 
-ggsave(here('figures/validation_testing/global_pred_vs_actual.png'), height=4,width=4)
+ggsave(here('figures/validation_testing/global_pred_vs_actual.png'), height=3,width=3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/global_pred_vs_actual.png'))
 ```
 
@@ -107,30 +125,43 @@ BerginskiRMisc::trimImage(here('figures/validation_testing/global_pred_vs_actual
 global_ROC_score = get_ROC(testing_results)
 global_ROC = get_ROC_plot_data(testing_results,"all","all")
 
+ROC_text = data.frame(
+	x=1,y=0,ROC_text = paste0('Validation AUROC: ', signif(global_ROC_score,3)))
+
 global_ROC_plot = ggplot(global_ROC, aes(x=fpr, y=tpr)) + 
 	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
 	geom_line(alpha=0.75) +
-	labs(x="False Positive Rate",y="True Positive Rate", title = global_ROC_score) +
+	geom_text(mapping=aes(x=1,y=0,label=ROC_text),data=ROC_text,color='black',vjust="inward",hjust="inward") +
+	labs(x="False Positive Rate",y="True Positive Rate") +
 	BerginskiRMisc::theme_berginski()
 
 global_AUPRC = get_AUPRC(testing_results)
 global_PRC = get_AUPRC_plot_data(testing_results,"all","all")
 global_percent_pos = mean(testing_results$viability_90)
 
+PRC_text = data.frame(
+	x=1,y=0,PRC_text = paste0('Validation AUPRC: ', signif(global_AUPRC,3)))
+
 global_PRC_plots = ggplot(global_PRC, aes(x=recall,y=precision)) + 
 	geom_hline(aes(yintercept = global_percent_pos), alpha=0.5, linetype=2) +
 	geom_line(alpha=0.75) + 
+	geom_text(mapping=aes(x=1,y=0,label=PRC_text),data=PRC_text,color='black',vjust="inward",hjust="inward") +
 	xlim(c(0,1)) + ylim(c(0,1)) +
-	labs(x="Recall",y="Precision", title = global_AUPRC) +
+	labs(x="Recall",y="Precision") +
 	BerginskiRMisc::theme_berginski()
 
 global_plots = global_ROC_plot + global_PRC_plots
-ggsave(here('figures/validation_testing/global_ROC_PRC.png'), height=4,width=8)
+ggsave(here('figures/validation_testing/global_ROC_PRC.png'), height=4*0.75,width=8*0.75)
 BerginskiRMisc::trimImage(here('figures/validation_testing/global_ROC_PRC.png'))
 ```
 
 ```{r}
-full_ROC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(ROC_plot_data),bind_rows)
+full_ROC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(ROC_plot_data),bind_rows) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	)) %>% mutate(drug = fct_relevel(drug,compound_order))
 
 ROC_plots = ggplot(full_ROC_vals, aes(x=fpr, y=tpr, color=cell_line)) + 
 	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
@@ -144,7 +175,12 @@ ROC_plots = ggplot(full_ROC_vals, aes(x=fpr, y=tpr, color=cell_line)) +
 	scale_color_brewer(type = "qual", palette = "Dark2") +
 	facet_wrap(~drug, nrow = 1)
 
-full_AUPRC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(PRC_plot_data),bind_rows)
+full_AUPRC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(PRC_plot_data),bind_rows) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	)) %>% mutate(drug = fct_relevel(drug,compound_order))
 
 PRC_plots = ggplot(full_AUPRC_vals, aes(x=recall,y=precision,color=cell_line)) + 
 	geom_hline(data=model_assessments, mapping = aes(yintercept = percent_pos, color=cell_line), alpha=0.5, linetype=2) +
@@ -161,7 +197,9 @@ PRC_plots = ggplot(full_AUPRC_vals, aes(x=recall,y=precision,color=cell_line)) +
 dir.create(here('figures/validation_testing/'))
 
 full_assess = ROC_plots / PRC_plots
-ggsave(here('figures/validation_testing/validation_ROC_PRC.png'),width=18*0.75,height=5*0.75)
+# ggsave(here('figures/validation_testing/validation_ROC_PRC.png'),width=18*0.5,height=15*0.5)
+
+ggsave(here('figures/validation_testing/validation_ROC_PRC.png'),width=18*0.6,height=5.9*0.6)
 BerginskiRMisc::trimImage(here('figures/validation_testing/validation_ROC_PRC.png'))
 ```
 

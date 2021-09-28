@@ -10,6 +10,7 @@ library(tidyverse)
 library(here)
 library(readxl)
 library(patchwork)
+library(broom)
 
 knitr::opts_knit$set(root.dir = here())
 ```
@@ -136,6 +137,16 @@ plate_vals_part2 = bind_rows(
 	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_6.xlsx'),c("XL-228","JANEX-1"),"P1004")
 )
 
+plate_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887",
+								"AT-9283","Lestaurtinib","KW-2449","K-252a","PF-03814735",
+								"XL-228","JANEX-1")
+
+plate_vals_part2 = plate_vals_part2 %>%
+	mutate(compound = fct_relevel(as.factor(compound), plate_order))
+
+plate_vals_part3 = plate_vals_part3 %>%
+	mutate(compound = fct_relevel(as.factor(compound), plate_order))
+
 if (any(is.na(plate_vals_part2$concentration_M)) | any(is.na(plate_vals_part3$concentration_M))) {
 	stop("Found missing concentration value, this shouldn't happen.")
 }
@@ -160,7 +171,7 @@ ggplot(all_DMSO_vals, aes(x=plate_name,y=lum)) +
 	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
-# Per Plate DMSO Tests
+# Per Plate Diagnostic Plotting/Analysis
 
 ```{r}
 DMSO_checks_part2 = plate_vals_part2 %>% 
@@ -169,23 +180,23 @@ DMSO_checks_part2 = plate_vals_part2 %>%
 	group_by(plate_name) %>%
 	nest() %>%
 	mutate(DMSO_1 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 1, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 1, 1, 0))))$p.value)) %>%
 	mutate(DMSO_2 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 2, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 2, 1, 0))))$p.value)) %>%
 	mutate(DMSO_3 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 3, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 3, 1, 0))))$p.value)) %>%
 	mutate(DMSO_4 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 4, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 4, 1, 0))))$p.value)) %>%
 	mutate(DMSO_5 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 5, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 5, 1, 0))))$p.value)) %>%
 	mutate(DMSO_6 = map_dbl(data, ~ tidy(t.test(lum ~ target_row, 
-																			data = .x %>% 
-																				mutate(target_row = ifelse(row == 6, 1, 0))))$p.value)) %>%
+																							data = .x %>% 
+																								mutate(target_row = ifelse(row == 6, 1, 0))))$p.value)) %>%
 	select(-data) %>%
 	pivot_longer(-plate_name, values_to = "p.value", names_to = "DMSO_row") %>%
 	mutate(p.value.adj = p.adjust(p.value, method="fdr"))
@@ -214,16 +225,118 @@ ggplot(treatment_lum_summaries_part3, aes(x=CV)) + geom_histogram()
 
 ```
 
+# Per Row Normalization
+
 ```{r}
-plate_DMSO_means_part2 = plate_vals_part2 %>%
+plate_row_DMSO_means_part2 = plate_vals_part2 %>%
 	filter(compound == "DMSO") %>%
 	group_by(row, plate_name) %>%
 	summarise(DMSO_mean = mean(lum),
 						num_DMSO = n())
 
-plate_DMSO_means_part3 = plate_vals_part3 %>%
+plate_row_DMSO_means_part3 = plate_vals_part3 %>%
 	filter(compound == "DMSO") %>%
 	group_by(row, plate_name) %>%
+	summarise(DMSO_mean = mean(lum),
+						num_DMSO = n())
+
+if (! all(plate_row_DMSO_means_part2$num_DMSO == max(plate_row_DMSO_means_part2$num_DMSO))) {
+	stop("Number of DMSO values in a plate isn't correct.")
+} else {
+	plate_row_DMSO_means_part2 = plate_row_DMSO_means_part2 %>% select(-num_DMSO)
+}
+
+if (! all(plate_row_DMSO_means_part3$num_DMSO == max(plate_row_DMSO_means_part3$num_DMSO))) {
+	stop("Number of DMSO values in a plate isn't correct.")
+} else {
+	plate_row_DMSO_means_part3 = plate_row_DMSO_means_part3 %>% select(-num_DMSO)
+}
+```
+
+```{r}
+qc_filter <- function(data_set, viability_threshold = 120) {
+	qc_fails = data_set %>% 
+		filter(viability > viability_threshold) %>% 
+		select(row,compound,cell_line,plate_name) %>% 
+		unique() %>%
+		mutate(qc_fail = T)
+	
+	data_set = data_set %>%
+		left_join(qc_fails) %>%
+		mutate(qc_fail = ifelse(is.na(qc_fail), F, T))
+	
+	return(data_set)
+}
+
+dir.create(here('results/validation_results/'), showWarnings = F)
+
+plate_vals_row_norm_part2 = plate_vals_part2 %>%
+	left_join(plate_row_DMSO_means_part2) %>% 
+	mutate(viability = lum/DMSO_mean*100) %>%
+	qc_filter() %>%
+	write_rds(here('results/validation_results/validation_screen_part2.rds'))
+
+plate_vals_row_norm_part3 = plate_vals_part3 %>%
+	left_join(plate_row_DMSO_means_part3) %>% 
+	mutate(viability = lum/DMSO_mean*100) %>%
+	qc_filter() %>%
+	write_rds(here('results/validation_results/validation_screen_part3.rds'))
+
+treatment_via_summaries_part2 = plate_vals_row_norm_part2 %>% 
+	group_by(compound, concentration_M, cell_line) %>%
+	summarise(sd = sd(viability),
+						num_samples = n(),
+						mean_via = mean(viability),
+						CV = sd/mean_via)
+treatment_via_summaries_part3 = plate_vals_row_norm_part3 %>% 
+	group_by(compound, concentration_M, cell_line) %>%
+	summarise(sd = sd(viability),
+						num_samples = n(),
+						mean_via = mean(viability),
+						CV = sd/mean_via)
+```
+
+```{r}
+b = ggplot(plate_vals_row_norm_part2 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	geom_hline(aes(yintercept = 100),alpha=0.5, linetype = 2) +
+	geom_hline(aes(yintercept = 120),alpha=0.5, linetype = 2) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(rows = vars(cell_line), cols = vars(compound)) +
+	ggtitle("Replicate 2")
+
+c = ggplot(plate_vals_row_norm_part3 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
+	geom_hline(aes(yintercept = 90),alpha=0.5) +
+	geom_hline(aes(yintercept = 100),alpha=0.5, linetype = 2) +
+	geom_hline(aes(yintercept = 120),alpha=0.5, linetype = 2) +
+	scale_x_log10() +
+	geom_jitter() +
+	geom_smooth() +
+	BerginskiRMisc::theme_berginski() +
+	facet_grid(rows = vars(cell_line), cols = vars(compound)) +
+	ggtitle("Replicate 3")
+
+d = b / c 
+
+ggsave(here('figures/validation_testing/validation_viability_part2_part3_row_norm.png'),width=20*0.75,height=15*0.75)
+BerginskiRMisc::trimImage(here('figures/validation_testing/validation_viability_part2_part3_row_norm.png'))
+```
+
+# Per Plate Normalization
+
+```{r}
+plate_DMSO_means_part2 = plate_vals_part2 %>%
+	filter(compound == "DMSO") %>%
+	group_by(plate_name) %>%
+	summarise(DMSO_mean = mean(lum),
+						num_DMSO = n())
+
+plate_DMSO_means_part3 = plate_vals_part3 %>%
+	filter(compound == "DMSO") %>%
+	group_by(plate_name) %>%
 	summarise(DMSO_mean = mean(lum),
 						num_DMSO = n())
 
@@ -257,25 +370,26 @@ qc_filter <- function(data_set, viability_threshold = 120) {
 
 dir.create(here('results/validation_results/'), showWarnings = F)
 
-plate_vals_part2 = plate_vals_part2 %>%
+plate_vals_plate_norm_part2 = plate_vals_part2 %>%
 	left_join(plate_DMSO_means_part2) %>% 
 	mutate(viability = lum/DMSO_mean*100) %>%
 	qc_filter() %>%
 	write_rds(here('results/validation_results/validation_screen_part2.rds'))
 
-plate_vals_part3 = plate_vals_part3 %>%
+plate_vals_plate_norm_part3 = plate_vals_part3 %>%
 	left_join(plate_DMSO_means_part3) %>% 
 	mutate(viability = lum/DMSO_mean*100) %>%
 	qc_filter() %>%
 	write_rds(here('results/validation_results/validation_screen_part3.rds'))
 
-treatment_via_summaries_part2 = plate_vals_part2 %>% 
+treatment_via_summaries_part2 = plate_vals_plate_norm_part2 %>% 
 	group_by(compound, concentration_M, cell_line) %>%
 	summarise(sd = sd(viability),
 						num_samples = n(),
 						mean_via = mean(viability),
 						CV = sd/mean_via)
-treatment_via_summaries_part3 = plate_vals_part3 %>% 
+
+treatment_via_summaries_part3 = plate_vals_plate_norm_part3 %>% 
 	group_by(compound, concentration_M, cell_line) %>%
 	summarise(sd = sd(viability),
 						num_samples = n(),
@@ -284,10 +398,10 @@ treatment_via_summaries_part3 = plate_vals_part3 %>%
 ```
 
 ```{r}
-b = ggplot(plate_vals_part2 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
+b = ggplot(plate_vals_plate_norm_part2 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
 	geom_hline(aes(yintercept = 90),alpha=0.5) +
 	geom_hline(aes(yintercept = 100),alpha=0.5, linetype = 2) +
-	geom_hline(aes(yintercept = 130),alpha=0.5, linetype = 2) +
+	geom_hline(aes(yintercept = 120),alpha=0.5, linetype = 2) +
 	scale_x_log10() +
 	geom_jitter() +
 	geom_smooth() +
@@ -295,10 +409,10 @@ b = ggplot(plate_vals_part2 %>% filter(compound != "DMSO"), aes(x=concentration_
 	facet_grid(rows = vars(cell_line), cols = vars(compound)) +
 	ggtitle("Replicate 2")
 
-c = ggplot(plate_vals_part3 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
+c = ggplot(plate_vals_plate_norm_part3 %>% filter(compound != "DMSO"), aes(x=concentration_M, y = viability, color=qc_fail)) +
 	geom_hline(aes(yintercept = 90),alpha=0.5) +
 	geom_hline(aes(yintercept = 100),alpha=0.5, linetype = 2) +
-	geom_hline(aes(yintercept = 130),alpha=0.5, linetype = 2) +
+	geom_hline(aes(yintercept = 120),alpha=0.5, linetype = 2) +
 	scale_x_log10() +
 	geom_jitter() +
 	geom_smooth() +
@@ -308,6 +422,6 @@ c = ggplot(plate_vals_part3 %>% filter(compound != "DMSO"), aes(x=concentration_
 
 d = b / c 
 
-ggsave(here('figures/validation_testing/validation_viability_part2_part3.png'),width=20*0.75,height=15*0.75)
-BerginskiRMisc::trimImage(here('figures/validation_testing/validation_viability_part2_part3.png'))
+ggsave(here('figures/validation_testing/validation_viability_part2_part3_plate_norm.png'),width=20*0.75,height=15*0.75)
+BerginskiRMisc::trimImage(here('figures/validation_testing/validation_viability_part2_part3_plate_norm.png'))
 ```

@@ -36,7 +36,88 @@ testing_results = testing_results %>%
 	identity()
 
 testing_results = testing_results %>% 
-	left_join(klaeger_below90_model_predictions)
+	left_join(klaeger_below90_model_predictions) %>% 
+	mutate(drug = fct_relevel(drug,compound_order))
+```
+```{r}
+temp = testing_results  %>%
+	group_by(cell_line, concentration_M,drug) %>%
+	mutate(actual_viability = mean(actual_viability),
+				 prob_below_90 = mean(prob_below_90)) %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	)) %>% mutate(drug = fct_relevel(drug,compound_order))
+
+ggplot(temp, aes(x=prob_below_90,y=actual_viability, color=cell_line)) + 
+	geom_line() +
+	facet_wrap(~drug, nrow = 1) +
+	BerginskiRMisc::theme_berginski()
+
+ggsave(here('figures/validation_testing/pred_vs_actual.png'),width=18*0.6,height=5.9*0.6)
+BerginskiRMisc::trimImage(here('figures/validation_testing/pred_vs_actual.png'))
+```
+
+```{r}
+temp = testing_results %>%
+	mutate(cell_line = case_when(
+		cell_line == "P1004" ~ "P0422-T1",
+		cell_line == "P1304" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF"
+	))
+
+ggplot(temp %>% filter(drug %in% c("Masitinib", "Ripasudil", "AT-13148")), 
+			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90), linetype = 2) +
+	geom_point() +
+	geom_smooth() +
+	facet_wrap(~drug,nrow=1) + 
+	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
+	BerginskiRMisc::theme_berginski() +
+	theme(aspect.ratio = 1:1, legend.position = "none") +
+	scale_color_brewer(type = "qual", palette = "Dark2") 
+ggsave(here('figures/validation_testing/low_pred.png'), height=3)
+BerginskiRMisc::trimImage(here('figures/validation_testing/low_pred.png'))
+
+ggplot(temp %>% filter(drug %in% c("RGB-286638", "PHA-793887")), 
+			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90), linetype = 2) +
+	geom_point() +
+	geom_smooth() +
+	facet_wrap(~drug,nrow=1) + 
+	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
+	BerginskiRMisc::theme_berginski() +
+	theme(aspect.ratio = 1:1, legend.position = "none") +
+	scale_color_brewer(type = "qual", palette = "Dark2") 
+ggsave(here('figures/validation_testing/deadly_pred.png'), height=3)
+BerginskiRMisc::trimImage(here('figures/validation_testing/deadly_pred.png'))
+
+ggplot(temp %>% filter(drug %in% c("AT-9283", "Lestaurtinib")), 
+			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90), linetype = 2) +
+	geom_point() +
+	geom_smooth() +
+	facet_wrap(~drug,nrow=1) + 
+	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
+	BerginskiRMisc::theme_berginski() +
+	theme(aspect.ratio = 1:1, legend.position = "none") +
+	scale_color_brewer(type = "qual", palette = "Dark2") 
+ggsave(here('figures/validation_testing/high_diff_pred.png'), height=3)
+BerginskiRMisc::trimImage(here('figures/validation_testing/high_diff_pred.png'))
+
+ggplot(temp %>% filter(drug %in% c("K-252a", "PF-03814735", "XL-228")), 
+			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
+	geom_hline(aes(yintercept = 90), linetype = 2) +
+	geom_point() +
+	geom_smooth() +
+	facet_wrap(~drug,nrow=1) + 
+	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
+	BerginskiRMisc::theme_berginski() +
+	theme(aspect.ratio = 1:1, legend.position = "none") +
+	scale_color_brewer(type = "qual", palette = "Dark2") 
+ggsave(here('figures/validation_testing/high_cell_diff_pred.png'), height=3)
+BerginskiRMisc::trimImage(here('figures/validation_testing/high_cell_diff_pred.png'))
 ```
 
 ```{r}

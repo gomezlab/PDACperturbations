@@ -59,9 +59,13 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
 
 ```{r distribution of viability}
 ggplot(klaeger_data_matches_full, aes(x = viability)) + 
-	geom_histogram() +
+	geom_histogram(breaks=c(seq(0,130,by=5))) +
+	geom_vline(aes(xintercept = 90), color='green',size=2) +
 	labs(x="Cell Viability", y="Number of Drug/Cell Line Combos") +
 	theme_berginski()
+
+ggsave(here('figures/EDA_plots/all_cell_via_with_thresh.png'),width=4,height=2.75)
+BerginskiRMisc::trimImage(here('figures/EDA_plots/all_cell_via_with_thresh.png'))
 ```
 
 ```{r}

@@ -16,7 +16,12 @@ knitr::opts_knit$set(root.dir = here())
 ```
 
 ```{r}
-compound_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887","AT-9283","Lestaurtinib","K-252a","PF-03814735","XL-228")
+compound_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887","Lestaurtinib","AT-9283","KW-2449", "K-252a","PF-03814735","XL-228")
+
+low_effect_drugs <- c("Masitinib","Ripasudil","AT-13148")
+high_effect_drugs <- c("RGB-286638","PHA-793887")
+conc_diff_drugs <- c("Lestaurtinib","AT-9283","KW-2449")
+diff_cell_drugs <-c("K-252a","PF-03814735","XL-228")
 
 testing_results = bind_rows(
 	read_rds(here('results/validation_results/validation_screen_part2.rds')),
@@ -33,6 +38,10 @@ testing_results = testing_results %>%
 	filter(drug != "DMSO") %>%
 	mutate(viability_90 = actual_viability < 90) %>%
 	select(-lum) %>%
+  mutate(cell_line = case_when(
+		cell_line == "P0422" ~ "P0422-T1",
+		cell_line == "P0411" ~ "P0411-T1",
+		cell_line == "CAF" ~ "P0119-T1 CAF")) %>%
 	identity()
 
 testing_results = testing_results %>% 
@@ -44,12 +53,9 @@ temp = testing_results  %>%
 	group_by(cell_line, concentration_M,drug) %>%
 	mutate(actual_viability = mean(actual_viability),
 				 prob_below_90 = mean(prob_below_90)) %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	)) %>% mutate(drug = fct_relevel(drug,compound_order))
+	mutate(drug = fct_relevel(drug,compound_order)) #%>%
 
+temp$cell_line <- factor(temp$cell_line, levels = c("P0411-T1","P0422-T1","P0119-T1 CAF"))
 ggplot(temp, aes(x=prob_below_90,y=actual_viability, color=cell_line)) + 
 	geom_line() +
 	facet_wrap(~drug, nrow = 1) +
@@ -60,14 +66,8 @@ BerginskiRMisc::trimImage(here('figures/validation_testing/pred_vs_actual.png'))
 ```
 
 ```{r}
-temp = testing_results %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	))
 
-ggplot(temp %>% filter(drug %in% c("Masitinib", "Ripasudil", "AT-13148")), 
+ggplot(temp %>% filter(drug %in% low_effect_drugs), 
 			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
 	geom_hline(aes(yintercept = 90), linetype = 2) +
 	geom_point() +
@@ -75,12 +75,12 @@ ggplot(temp %>% filter(drug %in% c("Masitinib", "Ripasudil", "AT-13148")),
 	facet_wrap(~drug,nrow=1) + 
 	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
 	BerginskiRMisc::theme_berginski() +
-	theme(aspect.ratio = 1:1, legend.position = "none") +
+	theme(aspect.ratio = 1, legend.position = "none") +
 	scale_color_brewer(type = "qual", palette = "Dark2") 
 ggsave(here('figures/validation_testing/low_pred.png'), height=3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/low_pred.png'))
 
-ggplot(temp %>% filter(drug %in% c("RGB-286638", "PHA-793887")), 
+ggplot(temp %>% filter(drug %in% high_effect_drugs), 
 			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
 	geom_hline(aes(yintercept = 90), linetype = 2) +
 	geom_point() +
@@ -88,12 +88,12 @@ ggplot(temp %>% filter(drug %in% c("RGB-286638", "PHA-793887")),
 	facet_wrap(~drug,nrow=1) + 
 	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
 	BerginskiRMisc::theme_berginski() +
-	theme(aspect.ratio = 1:1, legend.position = "none") +
+	theme(aspect.ratio = 1, legend.position = "none") +
 	scale_color_brewer(type = "qual", palette = "Dark2") 
 ggsave(here('figures/validation_testing/deadly_pred.png'), height=3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/deadly_pred.png'))
 
-ggplot(temp %>% filter(drug %in% c("AT-9283", "Lestaurtinib")), 
+ggplot(temp %>% filter(drug %in% conc_diff_drugs), 
 			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
 	geom_hline(aes(yintercept = 90), linetype = 2) +
 	geom_point() +
@@ -101,12 +101,12 @@ ggplot(temp %>% filter(drug %in% c("AT-9283", "Lestaurtinib")),
 	facet_wrap(~drug,nrow=1) + 
 	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
 	BerginskiRMisc::theme_berginski() +
-	theme(aspect.ratio = 1:1, legend.position = "none") +
+	theme(aspect.ratio = 1, legend.position = "none") +
 	scale_color_brewer(type = "qual", palette = "Dark2") 
 ggsave(here('figures/validation_testing/high_diff_pred.png'), height=3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/high_diff_pred.png'))
 
-ggplot(temp %>% filter(drug %in% c("K-252a", "PF-03814735", "XL-228")), 
+ggplot(temp %>% filter(drug %in% diff_cell_drugs), 
 			 aes(x=log10(concentration_M), y=actual_viability, color=cell_line)) +
 	geom_hline(aes(yintercept = 90), linetype = 2) +
 	geom_point() +
@@ -114,7 +114,7 @@ ggplot(temp %>% filter(drug %in% c("K-252a", "PF-03814735", "XL-228")),
 	facet_wrap(~drug,nrow=1) + 
 	labs(x="Log 10 Compound Concentration (M)",y="Cell Viability") +
 	BerginskiRMisc::theme_berginski() +
-	theme(aspect.ratio = 1:1, legend.position = "none") +
+	theme(aspect.ratio = 1, legend.position = "none") +
 	scale_color_brewer(type = "qual", palette = "Dark2") 
 ggsave(here('figures/validation_testing/high_cell_diff_pred.png'), height=3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/high_cell_diff_pred.png'))
@@ -183,11 +183,7 @@ model_assessments = testing_results %>%
 	mutate(PRC_plot_data = pmap(list(data,cell_line,drug), get_AUPRC_plot_data)) %>%
 	mutate(percent_pos = map_dbl(data, ~mean(.x$viability_90))) %>%
 	ungroup() %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	)) %>% mutate(drug = fct_relevel(drug,compound_order)) %>%
+	mutate(drug = fct_relevel(drug,compound_order)) %>%
 	identity()
 ```
 
@@ -198,7 +194,7 @@ ggplot(testing_results, aes(x=prob_below_90,y=actual_viability)) +
 	labs(x="Probability Cell Viability Below 90%", y="Cell Viability") +
 	BerginskiRMisc::theme_berginski()
 
-ggsave(here('figures/validation_testing/global_pred_vs_actual.png'), height=3,width=3)
+ggsave(here('figures/validation_testing/global_pred_vs_actual.png'), height=3.3,width=3.3)
 BerginskiRMisc::trimImage(here('figures/validation_testing/global_pred_vs_actual.png'))
 ```
 
@@ -232,17 +228,18 @@ global_PRC_plots = ggplot(global_PRC, aes(x=recall,y=precision)) +
 	BerginskiRMisc::theme_berginski()
 
 global_plots = global_ROC_plot + global_PRC_plots
-ggsave(here('figures/validation_testing/global_ROC_PRC.png'), height=4*0.75,width=8*0.75)
+ggsave(here('figures/validation_testing/global_ROC_PRC.png'), height=3.3,width=6.6)
 BerginskiRMisc::trimImage(here('figures/validation_testing/global_ROC_PRC.png'))
 ```
 
 ```{r}
 full_ROC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(ROC_plot_data),bind_rows) %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	)) %>% mutate(drug = fct_relevel(drug,compound_order))
+#	mutate(cell_line = case_when(
+#		cell_line == "P1004" ~ "P0422-T1",
+#		cell_line == "P1304" ~ "P0411-T1",
+#		cell_line == "CAF" ~ "P0119-T1 CAF")) %>% 
+  mutate(drug = fct_relevel(drug,compound_order))%>%
+  mutate(cell_line = fct_relevel(cell_line, c("P0411-T1", "P0422-T1","P0119-T1 CAF")))
 
 ROC_plots = ggplot(full_ROC_vals, aes(x=fpr, y=tpr, color=cell_line)) + 
 	geom_abline(intercept = 0,slope = 1, alpha=0.5,linetype=2) +
@@ -257,11 +254,14 @@ ROC_plots = ggplot(full_ROC_vals, aes(x=fpr, y=tpr, color=cell_line)) +
 	facet_wrap(~drug, nrow = 1)
 
 full_AUPRC_vals = reduce(model_assessments %>% filter(!is.na(ROC)) %>% pull(PRC_plot_data),bind_rows) %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	)) %>% mutate(drug = fct_relevel(drug,compound_order))
+#	mutate(cell_line = case_when(
+#		cell_line == "P1004" ~ "P0422-T1",
+#		cell_line == "P1304" ~ "P0411-T1",
+#		cell_line == "CAF" ~ "P0119-T1 CAF")) %>% 
+  mutate(drug = fct_relevel(drug,compound_order)) 
+
+full_AUPRC_vals$cell_line <- factor(full_AUPRC_vals$cell_line, levels = c("P0411-T1","P0422-T1","P0119-T1 CAF"))
+model_assessments$cell_line <- factor(model_assessments$cell_line, levels = c("P0411-T1","P0422-T1","P0119-T1 CAF"))
 
 PRC_plots = ggplot(full_AUPRC_vals, aes(x=recall,y=precision,color=cell_line)) + 
 	geom_hline(data=model_assessments, mapping = aes(yintercept = percent_pos, color=cell_line), alpha=0.5, linetype=2) +
@@ -294,7 +294,7 @@ ggplot(testing_results, aes(x=prob_below_90, y = actual_viability, color = conce
 	geom_vline(aes(xintercept = 0.5)) +
 	BerginskiRMisc::theme_berginski() +
 	xlim(c(0,1)) +
-	facet_grid(rows = vars(cell_line), cols = vars(drug))
+	facet_grid(rows = vars(fct_relevel(cell_line,"P0411-T1","P0422-T1","P0119-T1 CAF")), cols = vars(drug))
 
 ggsave(here('figures/validation_testing/validation_via_vs_predicted.png'),width=18*0.75,height=5*0.75)
 BerginskiRMisc::trimImage(here('figures/validation_testing/validation_via_vs_predicted.png'))

@@ -14,12 +14,12 @@ cell_line_compound_splits = read_rds(here('results/klaeger_screen_regression_CV_
 norm_recipe <- 
 	recipe(
 		viability ~ ., 
-		data = cell_line_compound_splits$CAF$splits[[1]]$data
+		data = cell_line_compound_splits[["P0119-T1 CAF"]]$splits[[1]]$data
 	) %>%
 	step_center(all_predictors()) %>%
 	step_scale(all_predictors()) %>%
 	# estimate the means and standard deviations
-	prep(training = cell_line_compound_splits$CAF$splits[[1]]$data, retain = TRUE)
+	prep(training = cell_line_compound_splits[["P0119-T1 CAF"]]$splits[[1]]$data, retain = TRUE)
 
 glm_spec <- linear_reg(
 	penalty = tune(), 
@@ -39,7 +39,7 @@ glm_wf <- workflow() %>%
 
 tune_grid(
 	glm_wf,
-	resamples = cell_line_compound_splits$CAF,
+	resamples = cell_line_compound_splits[["P0119-T1 CAF"]],
 	grid = glm_grid,
 	control = control_grid(save_pred = TRUE)
 ) %>% write_rds(here('results/glm_regression_models/CAF.rds'), compress = 'gz')

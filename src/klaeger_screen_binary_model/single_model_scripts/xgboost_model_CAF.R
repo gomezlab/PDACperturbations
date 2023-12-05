@@ -32,7 +32,7 @@ xgb_grid <- grid_latin_hypercube(
 	sample_size = sample_prop(),
 	#mtry is affected by the size of the data sets, so we need to provide a sample
 	#data set for the mtry ranges to be set
-	finalize(mtry(), cell_line_compound_splits$CAF),
+	finalize(mtry(), cell_line_compound_splits[["P0119-T1 CAF"]]),
 	learn_rate(),
 	size = 100
 )
@@ -44,7 +44,7 @@ xgb_wf <- workflow() %>%
 
 xgb_res_CAF <- tune_grid(
 	xgb_wf,
-	resamples = cell_line_compound_splits$CAF,
+	resamples = cell_line_compound_splits[["P0119-T1 CAF"]],
 	grid = xgb_grid,
 	control = control_grid(save_pred = TRUE)
 ) %>% write_rds(here('results/xgboost_below90_models/CAF.rds'), compress = 'gz')

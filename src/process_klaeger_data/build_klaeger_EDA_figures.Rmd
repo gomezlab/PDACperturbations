@@ -78,12 +78,15 @@ BerginskiRMisc::trimImage(here('figures/klaeger_EDA/only_legend.png'))
 
 ```{r}
 cell_viability_summary = cell_viability_summary %>%
-	mutate(drug = fct_relevel(as.factor(drug), rev(num_affected_kinases$drug)))
+	mutate(drug = fct_relevel(as.factor(drug), rev(num_affected_kinases$drug)),
+	       cell_line=fct_relevel(cell_line), "")
 
 ggplot(cell_viability_summary, aes(x=log10(concentration_M),y=mean_via, color=cell_line)) +
 	geom_line(lwd=1.5) + 
 	BerginskiRMisc::theme_berginski() +
 	theme(axis.text.x = element_text(angle = 90)) +
+  #guides(color = guide_legend(reverse=TRUE))+
+  #scale_linetype_manual(guide = guide_legend(reverse = TRUE))+
 	scale_color_brewer(type = "qual", palette = "Dark2") +
 	facet_wrap(~drug,nrow=7)
 

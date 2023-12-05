@@ -1,7 +1,7 @@
 Klaeger EDA Figures
 ================
 Matthew Berginski
-2021-07-07
+2023-11-07
 
 ``` r
 klaeger_screen_data = read_rds(here('results/klaeger_screen_for_regression.rds'))
@@ -12,7 +12,8 @@ cell_viability_summary = klaeger_screen_data %>%
     summarise(mean_via = mean(viability))
 ```
 
-    ## `summarise()` has grouped output by 'cell_line', 'concentration_M'. You can override using the `.groups` argument.
+    ## `summarise()` has grouped output by 'cell_line', 'concentration_M'. You can
+    ## override using the `.groups` argument.
 
 ``` r
 klaeger_screen_data_unique = klaeger_screen_data %>% select(-cell_line,-viability) %>% unique()
@@ -42,9 +43,8 @@ klaeger_screen_data_unique_tidy = klaeger_screen_data_unique_tidy %>%
     mutate(relative_intensity = ifelse(relative_intensity > 2, 2, relative_intensity))
 ```
 
-    ## Joining, by = "gene"
-
-    ## Joining, by = c("drug", "concentration_M")
+    ## Joining with `by = join_by(gene)`
+    ## Joining with `by = join_by(drug, concentration_M)`
 
 ``` r
 heat_labels = klaeger_screen_data_unique_tidy %>% group_by(drug) %>% summarise(mean_Y = mean(Y)) %>% mutate(X = -50, relative_intensity = 2)
@@ -52,7 +52,8 @@ heat_labels = klaeger_screen_data_unique_tidy %>% group_by(drug) %>% summarise(m
 klaeger_heat = ggplot(klaeger_screen_data_unique_tidy, aes(x=X,y=Y,fill=relative_intensity)) +
     geom_tile() + 
     theme_void() +
-    scale_fill_gradient2(low = rgb(0.60,0.557,0.765,1), mid = rgb(1,1,1,1), high = rgb(0.946,0.639,0.251,1), midpoint = 1)
+    scale_fill_gradient2(low = rgb(0.60,0.557,0.765,1), mid = rgb(1,1,1,1), high = rgb(0.946,0.639,0.251,1), midpoint = 1) +
+    labs(fill = "Target\nActivation")
     # scale_fill_distiller(type = "div")
 
 ggsave(here('figures/klaeger_EDA/klaeger_heat.png'),height=40, limitsize = F)
@@ -62,9 +63,19 @@ ggsave(here('figures/klaeger_EDA/klaeger_heat.png'),height=40, limitsize = F)
 
 ``` r
 BerginskiRMisc::trimImage(here('figures/klaeger_EDA/klaeger_heat.png'))
+```
 
+    ## Warning in
+    ## BerginskiRMisc::trimImage(here("figures/klaeger_EDA/klaeger_heat.png")):
+    ## Imagemagick not installed or not avaible when called through trimImage
+    ## function.
+
+    ## NULL
+
+``` r
 klaeger_heat_label = klaeger_heat + 
     geom_text(data = heat_labels, mapping = aes(x = X,y = mean_Y,label = drug)) +
+    theme(legend.position = "none") +
     xlim(c(-65,NA))
 
 ggsave(here('figures/klaeger_EDA/klaeger_heat_reg_size.png'),height=12) 
@@ -76,20 +87,47 @@ ggsave(here('figures/klaeger_EDA/klaeger_heat_reg_size.png'),height=12)
 BerginskiRMisc::trimImage(here('figures/klaeger_EDA/klaeger_heat_reg_size.png'))
 ```
 
+    ## Warning in
+    ## BerginskiRMisc::trimImage(here("figures/klaeger_EDA/klaeger_heat_reg_size.png")):
+    ## Imagemagick not installed or not avaible when called through trimImage
+    ## function.
+
+    ## NULL
+
+``` r
+klaeger_heat_legend <- get_legend(klaeger_heat)
+
+# Convert to a ggplot and print
+ggsave(here('figures/klaeger_EDA/only_legend.png'),as_ggplot(klaeger_heat_legend),dpi=300)
+```
+
+    ## Saving 7 x 5 in image
+
+``` r
+BerginskiRMisc::trimImage(here('figures/klaeger_EDA/only_legend.png'))
+```
+
+    ## Warning in
+    ## BerginskiRMisc::trimImage(here("figures/klaeger_EDA/only_legend.png")):
+    ## Imagemagick not installed or not avaible when called through trimImage
+    ## function.
+
+    ## NULL
+
 ``` r
 cell_viability_summary = cell_viability_summary %>%
-    mutate(drug = fct_relevel(as.factor(drug), num_affected_kinases$drug))
+    mutate(drug = fct_relevel(as.factor(drug), rev(num_affected_kinases$drug)))
 
-ggplot(cell_viability_summary, aes(x=concentration_M,y=mean_via, color=cell_line)) +
+ggplot(cell_viability_summary, aes(x=log10(concentration_M),y=mean_via, color=cell_line)) +
     geom_line(lwd=1.5) + 
     BerginskiRMisc::theme_berginski() +
     theme(axis.text.x = element_text(angle = 90)) +
     scale_color_brewer(type = "qual", palette = "Dark2") +
-    facet_wrap(~drug,nrow=1)
+    facet_wrap(~drug,nrow=7)
 ```
 
 ![](build_klaeger_EDA_figures_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
-ggsave(here('figures/klaeger_EDA/via_curves.png'), width=40,height=2, dpi=300, limitsize = F)
+ggsave(here('figures/klaeger_EDA/via_curves.png'), width=20,height=10, dpi=300, limitsize = F)
 ```

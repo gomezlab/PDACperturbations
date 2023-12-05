@@ -18,8 +18,8 @@ the compound. Thus, we should set all these “missing” values to 1 which
 indicates that the relative ratio with DMSO stays the same throughout.
 
 I have tried to double check that non-hits are excluded with compound
-Y−39983. Klaeger has also provided a set of PDF files with summaries
-of each hit and non-hit
+Y−39983. Klaeger has also provided a set of PDF files with summaries of
+each hit and non-hit
 (<https://www.proteomicsdb.org/#projects/4257/6090>, for Y-39983). For Y
 compound, there are 36 plots in the hits section of the PDF, matching
 the number in the supplemental table. Small victory.
@@ -104,7 +104,7 @@ above the 99.99th percentile down to that value.
 max_val = quantile(klaeger_full$relative_intensity, 0.9999, na.rm=T)
 klaeger_full = klaeger_full %>%
     mutate(relative_intensity = ifelse(relative_intensity >= max_val, max_val, relative_intensity)) %>%
-    write_rds(here('data/klaeger_full_tidy.rds'))
+    write_rds(here('results/klaeger_full_tidy.rds'), compress = 'gz')
 ```
 
 # Exploritory Data Analysis

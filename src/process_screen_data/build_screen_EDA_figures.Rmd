@@ -10,17 +10,20 @@ library(tidymodels)
 library(tidyverse)
 library(yardstick)
 library(tictoc)
-library(here)
+
 library(patchwork)
 library(gt)
+library(dplyr)
 library(ggpubr)
 library(MESS)
 library(gridExtra)
 library(vip)
-
+library(readr)
 library(BerginskiRMisc)
+library(here)
 
 knitr::opts_knit$set(root.dir = here::here())
+
 ```
 
 # Read In Combined Klaeger/Synergy Data and Organize
@@ -28,12 +31,7 @@ knitr::opts_knit$set(root.dir = here::here())
 This chunk of code reads in the pre-processed Klaeger/Synergy data.
 
 ```{r}
-klaeger_data_matches_full = read_rds(here('results/klaeger_screen_for_regression.rds')) %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	))
+klaeger_data_matches_full = read_rds(here('results/klaeger_screen_for_regression.rds')) 
 ```
 
 ```{r data organization by viability}
@@ -60,7 +58,7 @@ klaeger_data_matches_full = klaeger_data_matches_full %>%
 ```{r distribution of viability}
 ggplot(klaeger_data_matches_full, aes(x = viability)) + 
 	geom_histogram(breaks=c(seq(0,130,by=5))) +
-	geom_vline(aes(xintercept = 90), color='green',size=2) +
+	geom_vline(aes(xintercept = 90), color='green',linewidth=2) +
 	labs(x="Cell Viability", y="Number of Drug/Cell Line Combos") +
 	theme_berginski()
 
@@ -70,17 +68,23 @@ BerginskiRMisc::trimImage(here('figures/EDA_plots/all_cell_via_with_thresh.png')
 
 ```{r}
 library(ggridges)
-ggplot(klaeger_data_matches_full, aes(x=viability,y=cell_line)) +
+klaeger_data_matches_full %>%
+  mutate(cell_line = fct_relevel(cell_line, c("P0119-T1 CAF","P0422-T1","P0411-T1")))%>%
+  ggplot(aes(x=viability,y=cell_line)) +
 	geom_density_ridges() +
 	# scale_x_continuous(expand = c(0, 0)) +
 	scale_y_discrete(expand = expand_scale(mult = c(0.01, .7))) +
 	labs(x="Cell Viability",y='Cell Line') +
 	# theme_ridges() +
-	theme_berginski()
+	theme_berginski()+
+  theme(axis.text=element_text(size=9),axis.title=element_text(size=14))
 
 dir.create(here('figures/EDA_plots'), recursive = T, showWarnings = F)
-ggsave(here('figures/EDA_plots/cell_line_viability_plots.png'),height = 6.5, width = 4)
+ggsave(here('figures/EDA_plots/cell_line_viability_plots.png'),height = 6, width = 4)
 trimImage(here('figures/EDA_plots/cell_line_viability_plots.png'))
+
+cell_line_binary_freq<- klaeger_data_matches_full %>% group_by(cell_line) %>% select(viability, cell_line) %>% mutate(total_rows = n())%>%
+  filter(viability <90) %>% mutate(perc_below = n())
 ```
 
 ```{r}
@@ -89,10 +93,17 @@ ggplot(klaeger_data_matches_full, aes(x=viability,y=drug)) +
 	geom_density_ridges() +
 	labs(x="Cell Viability",y='Compound') +
 	# scale_y_discrete(expand = expand_scale(mult = c(0.01, .7))) +
-	theme_berginski()
+	theme_berginski()+
+  theme(axis.text=element_text(size=6), axis.title=element_text(size=10))
 
-ggsave(here('figures/EDA_plots/compound_viability_plots.png'),height = 6.5)
+ggsave(here('figures/EDA_plots/compound_viability_plots.png'),height = 4.6, width=4.5)
 trimImage(here('figures/EDA_plots/compound_viability_plots.png'))
+
+#CUDC-101, AT-7519, Alvocidib
+txt_vary<-klaeger_data_matches_full %>%
+  select(drug,concentration_M, cell_line, viability)%>%
+  group_by(drug) %>%
+  mutate(min= min(viability), max(viability),range= max(viability)-min(viability))
 ```
 
 ```{r}
@@ -102,7 +113,7 @@ treatment_variability = klaeger_data_matches_full %>%
 						viability_mean = mean(viability)) %>% 
 	arrange(desc(viability_sd))
 
-ggplot(treatment_variability, aes(x=viability_sd,y=cell_line)) +
+ggplot(treatment_variability, aes(x=viability_sd,y=fct_rev(as_factor(cell_line)))) +
 	geom_density_ridges() +
 	labs(x="Standard Deviation in Cell Viability By Treatment",y='') +
 	theme_berginski()

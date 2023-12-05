@@ -1,7 +1,7 @@
 Process Data for ML
 ================
 Matthew Berginski
-2021-07-07
+2023-11-07
 
 The following section reads in the klaeger data and filters to the
 collection of compounds that are also in the screen screen. The data is
@@ -12,12 +12,13 @@ intensity values for every gene will be in a seperate column.
 drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_screen_drug_matches.csv'))
 ```
 
+    ## Rows: 62 Columns: 2
+    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (2): klaeger_drugs, screen_drugs
     ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   klaeger_drugs = col_character(),
-    ##   screen_drugs = col_character()
-    ## )
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
 klaeger = read_rds(here('results/klaeger_full_tidy.rds')) %>%
@@ -198,9 +199,9 @@ for (this_cell_line in unique(klaeger_screen_gene_variation$cell_line)) {
 }
 ```
 
-    ## [1] "CAF"
-    ## [1] "CAF"   "P1004"
-    ## [1] "CAF"   "P1004" "P1304"
+    ## [1] "P0119-T1 CAF"
+    ## [1] "P0119-T1 CAF" "P0411-T1"    
+    ## [1] "P0119-T1 CAF" "P0411-T1"     "P0422-T1"
 
 ``` r
 write_rds(cell_line_compound_splits, here('results/klaeger_screen_regression_CV_split.rds'), compress = 'gz')

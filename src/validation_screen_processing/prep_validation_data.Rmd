@@ -26,7 +26,7 @@ read_xlsx_plate_data <- function(file_name,these_compounds,this_cell_line,skip_l
 	
 	temp_plate = read_excel(file_name, skip = skip_lines) %>%
 		select(-A, -`...2`) %>%
-		slice(1:6) %>%
+		dplyr::slice(1:6) %>%
 		mutate(row = c(seq(6))) %>% 
 		mutate(compound = c(rep(these_compounds[1],3),rep(these_compounds[2],3))) %>%
 		pivot_longer(-c(compound,row), names_to = "concentration_M",values_to = "lum") %>%
@@ -60,7 +60,7 @@ read_csv_plate_data <- function(file_name,these_compounds,this_cell_line) {
 	
 	temp_plate = read_csv(file_name, col_names = FALSE, show_col_types = F) %>%
 		select(-X1, -X12) %>%
-		slice(2:7) %>%
+		dplyr::slice(2:7) %>%
 		mutate(row = 1:6) %>% 
 		mutate(compound = c(rep(these_compounds[1],3),rep(these_compounds[2],3))) %>%
 		pivot_longer(-c(compound,row), names_to = "concentration_M",values_to = "lum") %>%
@@ -99,19 +99,19 @@ plate_vals_part3 = bind_rows(
 	read_csv_plate_data(here('data/PDAC_validation_screen_part3/119_5.csv'),c("K-252a","PF-03814735"),"CAF"),
 	read_csv_plate_data(here('data/PDAC_validation_screen_part3/119_6.csv'),c("XL-228","JANEX-1"),"CAF"),
 	
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_1.csv'),c("Masitinib","Ripasudil"),"P1304"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_2.csv'),c("AT-13148","RGB-286638"),"P1304"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_3.csv'),c("PHA-793887","AT-9283"),"P1304"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_4.csv'),c("Lestaurtinib","KW-2449"),"P1304"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_5.csv'),c("K-252a","PF-03814735"),"P1304"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_6.csv'),c("XL-228","JANEX-1"),"P1304"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_1.csv'),c("Masitinib","Ripasudil"),"P0411"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_2.csv'),c("AT-13148","RGB-286638"),"P0411"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_3.csv'),c("PHA-793887","AT-9283"),"P0411"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_4.csv'),c("Lestaurtinib","KW-2449"),"P0411"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_5.csv'),c("K-252a","PF-03814735"),"P0411"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/411_6.csv'),c("XL-228","JANEX-1"),"P0411"),
 	
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_1.csv'),c("Masitinib","Ripasudil"),"P1004"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_2.csv'),c("AT-13148","RGB-286638"),"P1004"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_3.csv'),c("PHA-793887","AT-9283"),"P1004"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_4.csv'),c("Lestaurtinib","KW-2449"),"P1004"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_5.csv'),c("K-252a","PF-03814735"),"P1004"),
-	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_6.csv'),c("XL-228","JANEX-1"),"P1004")
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_1.csv'),c("Masitinib","Ripasudil"),"P0422"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_2.csv'),c("AT-13148","RGB-286638"),"P0422"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_3.csv'),c("PHA-793887","AT-9283"),"P0422"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_4.csv'),c("Lestaurtinib","KW-2449"),"P0422"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_5.csv'),c("K-252a","PF-03814735"),"P0422"),
+	read_csv_plate_data(here('data/PDAC_validation_screen_part3/422_6.csv'),c("XL-228","JANEX-1"),"P0422")
 )
 
 plate_vals_part2 = bind_rows(
@@ -122,19 +122,19 @@ plate_vals_part2 = bind_rows(
 	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/119_5.xlsx'),c("K-252a","PF-03814735"),"CAF"),
 	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/119_6.xlsx'),c("XL-228","JANEX-1"),"CAF"),
 	
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_1.xlsx'),c("Masitinib","Ripasudil"),"P1304"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_2.xlsx'),c("AT-13148","RGB-286638"),"P1304"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_3.xlsx'),c("PHA-793887","AT-9283"),"P1304"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_4.xlsx'),c("Lestaurtinib","KW-2449"),"P1304"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_5.xlsx'),c("K-252a","PF-03814735"),"P1304"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_6.xlsx'),c("XL-228","JANEX-1"),"P1304"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_1.xlsx'),c("Masitinib","Ripasudil"),"P0411"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_2.xlsx'),c("AT-13148","RGB-286638"),"P0411"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_3.xlsx'),c("PHA-793887","AT-9283"),"P0411"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_4.xlsx'),c("Lestaurtinib","KW-2449"),"P0411"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_5.xlsx'),c("K-252a","PF-03814735"),"P0411"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/411_6.xlsx'),c("XL-228","JANEX-1"),"P0411"),
 	
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_1.xlsx'),c("Masitinib","Ripasudil"),"P1004"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_2.xlsx'),c("AT-13148","RGB-286638"),"P1004"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_3.xlsx'),c("PHA-793887","AT-9283"),"P1004"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_4.xlsx'),c("Lestaurtinib","KW-2449"),"P1004"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_5.xlsx'),c("K-252a","PF-03814735"),"P1004"),
-	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_6.xlsx'),c("XL-228","JANEX-1"),"P1004")
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_1.xlsx'),c("Masitinib","Ripasudil"),"P0422"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_2.xlsx'),c("AT-13148","RGB-286638"),"P0422"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_3.xlsx'),c("PHA-793887","AT-9283"),"P0422"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_4.xlsx'),c("Lestaurtinib","KW-2449"),"P0422"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_5.xlsx'),c("K-252a","PF-03814735"),"P0422"),
+	read_xlsx_plate_data(here('data/PDAC_validation_screen_part2/422_6.xlsx'),c("XL-228","JANEX-1"),"P0422")
 )
 
 plate_order = c("Masitinib","Ripasudil","AT-13148","RGB-286638","PHA-793887",
@@ -207,15 +207,15 @@ DMSO_checks_part2 = plate_vals_part2 %>%
 ```{r}
 treatment_lum_summaries_part2 = plate_vals_part2 %>%
 	filter(compound != "DMSO") %>% 
-	group_by(row, compound, concentration_M, cell_line) %>%
-	summarise(sd = sd(lum),
+	group_by(cell_line, compound, concentration_M) %>%
+	dplyr::mutate(sd = sd(lum), 
 						num_samples = n(),
 						mean_lum = mean(lum),
 						CV = sd/mean_lum)
 
 treatment_lum_summaries_part3 = plate_vals_part3 %>% 
-	group_by(compound, concentration_M, cell_line) %>%
-	summarise(sd = sd(lum),
+	group_by(cell_line, compound, concentration_M) %>%
+	dplyr::mutate(sd = sd(lum), 
 						num_samples = n(),
 						mean_lum = mean(lum),
 						CV = sd/mean_lum)

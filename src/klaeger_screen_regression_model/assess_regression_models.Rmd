@@ -43,18 +43,18 @@ best_RMSE_models = list()
 
 ```{r}
 xgb_res_CAF = read_rds(here('results/xgboost_regression_models/CAF.rds'))
-xgb_res_P1004 = read_rds(here('results/xgboost_regression_models/P1004.rds'))
-xgb_res_P1304 = read_rds(here('results/xgboost_regression_models/P1304.rds'))
+xgb_res_P0422 = read_rds(here('results/xgboost_regression_models/P0422.rds'))
+xgb_res_P0411 = read_rds(here('results/xgboost_regression_models/P0411.rds'))
 
 best_RMSE_models$XGBoost$CAF = get_best_RMSE_model(xgb_res_CAF %>% collect_metrics())
-best_RMSE_models$XGBoost$P1004 = get_best_RMSE_model(xgb_res_P1004 %>% collect_metrics())
-best_RMSE_models$XGBoost$P1304 = get_best_RMSE_model(xgb_res_P1304 %>% collect_metrics())
+best_RMSE_models$XGBoost$P0422 = get_best_RMSE_model(xgb_res_P0422 %>% collect_metrics())
+best_RMSE_models$XGBoost$P0411 = get_best_RMSE_model(xgb_res_P0411 %>% collect_metrics())
 
 best_predictions = bind_rows(
 	best_predictions,
 	get_best_predictions(xgb_res_CAF,best_RMSE_models$XGBoost$CAF$.config[1],"CAF","XGBoost"),
-	get_best_predictions(xgb_res_P1004,best_RMSE_models$XGBoost$P1004$.config[1],"P1004","XGBoost"),
-	get_best_predictions(xgb_res_P1304,best_RMSE_models$XGBoost$P1304$.config[1],"P1304","XGBoost"),
+	get_best_predictions(xgb_res_P0422,best_RMSE_models$XGBoost$P0422$.config[1],"P0422","XGBoost"),
+	get_best_predictions(xgb_res_P0411,best_RMSE_models$XGBoost$P0411$.config[1],"P0411","XGBoost"),
 )
 ```
 
@@ -62,18 +62,18 @@ best_predictions = bind_rows(
 
 ```{r}
 rand_forest_res_CAF = read_rds(here('results/rand_forest_regression_models/CAF.rds'))
-rand_forest_res_P1004 = read_rds(here('results/rand_forest_regression_models/P1004.rds'))
-rand_forest_res_P1304 = read_rds(here('results/rand_forest_regression_models/P1304.rds'))
+rand_forest_res_P0422 = read_rds(here('results/rand_forest_regression_models/P0422.rds'))
+rand_forest_res_P0411 = read_rds(here('results/rand_forest_regression_models/P0411.rds'))
 
 best_RMSE_models$rand_forest$CAF = get_best_RMSE_model(rand_forest_res_CAF %>% collect_metrics())
-best_RMSE_models$rand_forest$P1004 = get_best_RMSE_model(rand_forest_res_P1004 %>% collect_metrics())
-best_RMSE_models$rand_forest$P1304 = get_best_RMSE_model(rand_forest_res_P1304 %>% collect_metrics())
+best_RMSE_models$rand_forest$P0422 = get_best_RMSE_model(rand_forest_res_P0422 %>% collect_metrics())
+best_RMSE_models$rand_forest$P0411 = get_best_RMSE_model(rand_forest_res_P0411 %>% collect_metrics())
 
 best_predictions = bind_rows(
 	best_predictions,
 	get_best_predictions(rand_forest_res_CAF,best_RMSE_models$rand_forest$CAF$.config[1],"CAF","Random Forest"),
-	get_best_predictions(rand_forest_res_P1004,best_RMSE_models$rand_forest$P1004$.config[1],"P1004","Random Forest"),
-	get_best_predictions(rand_forest_res_P1304,best_RMSE_models$rand_forest$P1304$.config[1],"P1304","Random Forest"),
+	get_best_predictions(rand_forest_res_P0422,best_RMSE_models$rand_forest$P0422$.config[1],"P0422","Random Forest"),
+	get_best_predictions(rand_forest_res_P0411,best_RMSE_models$rand_forest$P0411$.config[1],"P0411","Random Forest"),
 )
 ```
 
@@ -83,18 +83,18 @@ Blocking SVM model assessment for regression, since I don't really think SVM's w
 
 ```{r}
 # svm_res_CAF = read_rds(here('results/svm_regression_models/CAF.rds'))
-# svm_res_P1004 = read_rds(here('results/svm_regression_models/P1004.rds'))
-# svm_res_P1304 = read_rds(here('results/svm_regression_models/P1304.rds'))
+# svm_res_P0422 = read_rds(here('results/svm_regression_models/P0422.rds'))
+# svm_res_P0411 = read_rds(here('results/svm_regression_models/P0411.rds'))
 # 
 # best_RMSE_models$svm$CAF = get_best_RMSE_model(svm_res_CAF %>% collect_metrics())
-# best_RMSE_models$svm$P1004 = get_best_RMSE_model(svm_res_P1004 %>% collect_metrics())
-# best_RMSE_models$svm$P1304 = get_best_RMSE_model(svm_res_P1304 %>% collect_metrics())
+# best_RMSE_models$svm$P0422 = get_best_RMSE_model(svm_res_P0422 %>% collect_metrics())
+# best_RMSE_models$svm$P0411 = get_best_RMSE_model(svm_res_P0411 %>% collect_metrics())
 # 
 # best_predictions = bind_rows(
 # 	best_predictions,
 # 	get_best_predictions(svm_res_CAF,best_RMSE_models$svm$CAF$.config[1],"CAF","SVM"),
-# 	get_best_predictions(svm_res_P1004,best_RMSE_models$svm$P1004$.config[1],"P1004","SVM"),
-# 	get_best_predictions(svm_res_P1304,best_RMSE_models$svm$P1304$.config[1],"P1304","SVM"),
+# 	get_best_predictions(svm_res_P0422,best_RMSE_models$svm$P0422$.config[1],"P0422","SVM"),
+# 	get_best_predictions(svm_res_P0411,best_RMSE_models$svm$P0411$.config[1],"P0411","SVM"),
 # )
 ```
 
@@ -102,18 +102,18 @@ Blocking SVM model assessment for regression, since I don't really think SVM's w
 
 ```{r}
 glm_res_CAF = read_rds(here('results/glm_regression_models/CAF.rds'))
-glm_res_P1004 = read_rds(here('results/glm_regression_models/P1004.rds'))
-glm_res_P1304 = read_rds(here('results/glm_regression_models/P1304.rds'))
+glm_res_P0422 = read_rds(here('results/glm_regression_models/P0422.rds'))
+glm_res_P0411 = read_rds(here('results/glm_regression_models/P0411.rds'))
 
 best_RMSE_models$glm$CAF = get_best_RMSE_model(glm_res_CAF %>% collect_metrics())
-best_RMSE_models$glm$P1004 = get_best_RMSE_model(glm_res_P1004 %>% collect_metrics())
-best_RMSE_models$glm$P1304 = get_best_RMSE_model(glm_res_P1304 %>% collect_metrics())
+best_RMSE_models$glm$P0422 = get_best_RMSE_model(glm_res_P0422 %>% collect_metrics())
+best_RMSE_models$glm$P0411 = get_best_RMSE_model(glm_res_P0411 %>% collect_metrics())
 
 best_predictions = bind_rows(
 	best_predictions,
 	get_best_predictions(glm_res_CAF,best_RMSE_models$glm$CAF$.config[1],"CAF","GLMnet"),
-	get_best_predictions(glm_res_P1004,best_RMSE_models$glm$P1004$.config[1],"P1004","GLMnet"),
-	get_best_predictions(glm_res_P1304,best_RMSE_models$glm$P1304$.config[1],"P1304","GLMnet"),
+	get_best_predictions(glm_res_P0422,best_RMSE_models$glm$P0422$.config[1],"P0422","GLMnet"),
+	get_best_predictions(glm_res_P0411,best_RMSE_models$glm$P0411$.config[1],"P0411","GLMnet"),
 )
 ```
 
@@ -121,31 +121,29 @@ best_predictions = bind_rows(
 rmse_text = tribble(
 	~cell_line, ~model_type, ~RMSE,
 	"CAF", "GLMnet", best_RMSE_models$glm$CAF$mean,
-	"P1004", "GLMnet", best_RMSE_models$glm$P1004$mean,
-	"P1304", "GLMnet", best_RMSE_models$glm$P1304$mean,
+	"P0422", "GLMnet", best_RMSE_models$glm$P0422$mean,
+	"P0411", "GLMnet", best_RMSE_models$glm$P0411$mean,
 	"CAF", "Random Forest", best_RMSE_models$rand_forest$CAF$mean,
-	"P1004", "Random Forest", best_RMSE_models$rand_forest$P1004$mean,
-	"P1304", "Random Forest", best_RMSE_models$rand_forest$P1304$mean,
+	"P0422", "Random Forest", best_RMSE_models$rand_forest$P0422$mean,
+	"P0411", "Random Forest", best_RMSE_models$rand_forest$P0411$mean,
 	"CAF", "XGBoost", best_RMSE_models$XGBoost$CAF$mean,
-	"P1004", "XGBoost", best_RMSE_models$XGBoost$P1004$mean,
-	"P1304", "XGBoost", best_RMSE_models$XGBoost$P1304$mean,
+	"P0422", "XGBoost", best_RMSE_models$XGBoost$P0422$mean,
+	"P0411", "XGBoost", best_RMSE_models$XGBoost$P0411$mean,
 ) %>% mutate(x = range(best_predictions$viability)[2],
 						 y = range(best_predictions$viability)[1],
 						 RMSE_text = paste0("RMSE: ",round(RMSE,1))) %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	))
+mutate(cell_line = case_when(
+ 		cell_line == "P0422" ~ "P0422-T1",
+ 		cell_line == "P0411" ~ "P0411-T1",
+ 		cell_line == "CAF" ~ "P0119-T1 CAF"))
 
-best_predictions = best_predictions %>%
-	mutate(cell_line = case_when(
-		cell_line == "P1004" ~ "P0422-T1",
-		cell_line == "P1304" ~ "P0411-T1",
-		cell_line == "CAF" ~ "P0119-T1 CAF"
-	))
+ best_predictions = best_predictions %>%
+ 	mutate(cell_line = case_when(
+ 		cell_line == "P0422" ~ "P0422-T1",
+ 		cell_line == "P0411" ~ "P0411-T1",
+ 		cell_line == "CAF" ~ "P0119-T1 CAF"))
 
-ggplot(best_predictions, aes(x=viability, y=.pred)) + 
+ggplot(best_predictions,aes(x=viability, y=.pred)) + 
 	ylim(range(best_predictions$viability)) + 
 	xlim(range(best_predictions$viability)) + 
 	geom_hex() + 
@@ -156,7 +154,7 @@ ggplot(best_predictions, aes(x=viability, y=.pred)) +
 						hjust = "inward", vjust = "inward") +
 	labs(x = "Actual Cell Viability", y = "Predicted Viability", fill = "Density of\nPoints") +
 	BerginskiRMisc::theme_berginski() +
-	facet_grid(vars(model_type), vars(cell_line))
+	facet_grid(vars(model_type), vars(fct_relevel(cell_line,"P0411-T1","P0422-T1","P0119-T1 CAF")))
 dir.create(here('figures/model_assessment'), recursive = T, showWarnings = F)
 ggsave(here('figures/model_assessment/regression_models.png'))
 BerginskiRMisc::trimImage(here('figures/model_assessment/regression_models.png'))

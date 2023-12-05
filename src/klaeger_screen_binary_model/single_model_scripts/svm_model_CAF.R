@@ -33,7 +33,7 @@ svm_wf <- workflow() %>%
 tic()
 svm_res_CAF <- tune_grid(
 	svm_wf,
-	resamples = cell_line_compound_splits$CAF,
+	resamples = cell_line_compound_splits[["P0119-T1 CAF"]],
 	grid = svm_grid,
 	control = control_grid(save_pred = TRUE)
 ) %>% write_rds(here('results/svm_below90_models/CAF.rds'), compress = 'gz')

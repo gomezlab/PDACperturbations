@@ -22,7 +22,7 @@ rand_forest_spec <- rand_forest(
 rand_forest_grid <- grid_latin_hypercube(
 	trees(c(1000,5000)),
 	min_n(),
-	finalize(mtry(),cell_line_compound_splits$CAF),
+	finalize(mtry(),cell_line_compound_splits[["P0119-T1 CAF"]]),
 	size = 100
 )
 
@@ -33,7 +33,7 @@ rand_forest_wf <- workflow() %>%
 
 rand_forest_res_CAF <- tune_grid(
 	rand_forest_wf,
-	resamples = cell_line_compound_splits$CAF,
+	resamples = cell_line_compound_splits[["P0119-T1 CAF"]],
 	grid = rand_forest_grid,
 	control = control_grid(save_pred = TRUE)
 ) %>% write_rds(here('results/rand_forest_below90_models/CAF.rds'), compress = 'gz')

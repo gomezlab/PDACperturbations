@@ -1,7 +1,7 @@
 Process Data for ML
 ================
 Matthew Berginski
-2023-11-07
+2024-03-02
 
 The following section reads in the klaeger data and filters to the
 collection of compounds that are also in the screen screen. The data is
@@ -13,7 +13,7 @@ drug_matches = read_csv(here('src/find_screen_klaeger_matches/klaeger_screen_dru
 ```
 
     ## Rows: 62 Columns: 2
-    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+    ## ── Column specification ────────────────────────────────────────────────────────
     ## Delimiter: ","
     ## chr (2): klaeger_drugs, screen_drugs
     ## 

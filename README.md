@@ -45,3 +45,13 @@ Using the random forest model and associated code, predicting the rest of the Kl
 I've attempted to write a single [script](src/reproduce_results.R) that runs all the Rmarkdown files and scripts to completely reproduce the models and figures from the paper. I've only tested the code on Linux, but I see no reason why it wouldn't work on other platforms. Let me know if you attempt to run this script and it fails on your platform.
 
 This script takes a long time to run (7 hours on a Ryzen 7 5800x). This is mostly due to the hyperparameter scanning for the regression and binary models. RAM usage also goes up fairly high during parameter scanning, so you should probably have 64 GB of RAM.
+
+## Data Deposition
+
+The following information was supplied regarding data availability:
+The code is available at GitHub and Zenodo:
+-https://github.com/gomezlab/PDACperturbations
+-Berginiski and Jenner (2024). Kinome state is predictive of cell viability in pancreatic cancer tumor and cancer-associated fibroblast cell lines. 
+10.5281/zenodo.11623370
+
+

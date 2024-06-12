@@ -51,7 +51,7 @@ This script takes a long time to run (7 hours on a Ryzen 7 5800x). This is mostl
 The following information was supplied regarding data availability:
 The code is available at GitHub and Zenodo:
 -https://github.com/gomezlab/PDACperturbations
+-https://doi.org/10.5281/zenodo.11623371
 -Berginiski and Jenner (2024). Kinome state is predictive of cell viability in pancreatic cancer tumor and cancer-associated fibroblast cell lines. 
-10.5281/zenodo.11623370
 
 
